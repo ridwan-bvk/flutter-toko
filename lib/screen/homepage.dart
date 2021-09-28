@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:toko_online/screen/add_product.dart';
 import 'package:toko_online/screen/product_detail.dart';
 
 class HomePage extends StatelessWidget {
@@ -23,6 +24,14 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        //untuk memunculkan button tambah
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            Navigator.push(
+                context, MaterialPageRoute(builder: (Context) => AddProduct()));
+          }, //cara manggil page lain
+          child: Icon(Icons.add),
+        ),
         appBar: AppBar(
           title: Text(
             'Ridwan-store',

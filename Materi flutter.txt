@@ -5,6 +5,33 @@
  c.Softwrap:false (tidak akan otomatis kebawah),kalau true otomatis kebawah
  d.Textalign:mengatur rana kiri/kanan atau center
  e.style:textStyle(color:Colors.white,FonStyle:Fonstyle.italic, FontWeight:Fontweight.700, fontSize:20) (mengatur gaya text)
-TEXT("DATA",maxline :2)
 
+TEXT("DATA",maxline :2)
+2. Row & Column
+	a.column tertata kebawah widget 1,widgwt 2 tersusun ke bawah (vetical)
+	b.Row : tertata kesamping widget 1,widgwt 2 tersusun ke samping (Horizontal)
+Property yg biasa digunakan:
+.-mainAxisAligment:mainAxisAligmen.center,
+.-CrossAxistLigment:CrossAxistLigment.start,(rata kiri)
+11:58 AM 9/28/2021
+------------------------
 2. Container Widget: Padding,Background
+a.Margin :jarak kontainer luar dengan widget yg lain
+b.padding:jarak kontainer sisi dalam dengan widget yg lain
+contoh margin
+margin:EdgeInset.all(10) semua jaraknya 10
+margin:EdgeInset.FromLTRB(10,15,20,25)-->Lef top right bottom
+
+Padding :EdgeInset.all(10) semua jaraknya 10
+Padding :EdgeInset.only(bottom:20 top:10) --tertentu
+
+c.decoration:BoxDecoration(borderRadius:BorderRadius.circular(20),
+gradient:linearGradient( begin :aligment.topleft,end:Aligment.BottomRight,color:<color>[colors.amber,colors.blue]))
+
+3. Statlest Widget & Statefull Widget
+Widget ada dua
+Statlest (keadaan) : artinya keadaan nya tidak berubah dari awal sampe akhir
+Statefull	   :artinya keadaan nya bisa berubah2
+
+penulisan 
+stf key pertama untuk statefull
