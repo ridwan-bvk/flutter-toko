@@ -1,0 +1,10 @@
+1. Text Widget
+ a.maxline untuk maksimal baris
+ b.overflow:
+	b1. apabila terpotong bisa ditambah ...
+ c.Softwrap:false (tidak akan otomatis kebawah),kalau true otomatis kebawah
+ d.Textalign:mengatur rana kiri/kanan atau center
+ e.style:textStyle(color:Colors.white,FonStyle:Fonstyle.italic, FontWeight:Fontweight.700, fontSize:20) (mengatur gaya text)
+TEXT("DATA",maxline :2)
+
+2. Container Widget: Padding,Background
