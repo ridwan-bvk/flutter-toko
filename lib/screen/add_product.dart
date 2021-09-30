@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AddProduct extends StatelessWidget {
+  AddProduct({Key? key}) : super(key: key);
   //variabel untuk menagkap data dari form
   TextEditingController _nameController = TextEditingController();
   TextEditingController _descriptionController = TextEditingController();
