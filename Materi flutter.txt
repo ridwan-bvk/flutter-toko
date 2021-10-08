@@ -34,4 +34,97 @@ Statlest (keadaan) : artinya keadaan nya tidak berubah dari awal sampe akhir
 Statefull	   :artinya keadaan nya bisa berubah2
 
 penulisan 
-stf key pertama untuk statefull
+stf key pertama untuk statefull 
+4. anonymous method:metod tidak memiliki nama,hanya digunakan sekali saja,tidak akan dipanggil ditempat lain.
+penulisannya;(){..tulis kode program disini..}
+
+5.List view:
+kelemahan Column:kalau monitornya tidak cukup akan eror
+ListView : walaupun kolomnya tidak muat akan ada scroll
+
+6.TextStyle
+cara penambahan font 
+1. tambahkan folder di app misal nama font,masukan font nya
+2. daftarkan terlebih dahulu di pubspec yummel di fonts:
+family : Crashlanding --misal
+-Asset:font/crashlanding.ttf
+-Asset:font/crashlanitalic.ttf
+style:italic
+untuk bold bisanya style diisi dengan angka 700,untuk bisa melihat angka nya bisa disort ketika fonts size
+3. Cara penambahannya di style: TexStyle(fontfamily:Crashlanding)
+7. Animatid Container :animasi ketika diklik menggunakan getsture
+8. Flexiblelayout Widget
+agar layar tetap flexible
+9. Stack : itu menyusun kedepan/keatas/menumpuk
+10. Aligment: itu bisa membuat button disisi bawah,kiri/kanan
+11. Spaccer: fungsinya sama seperti spaceBetween untuk menambah spasi
+12.sizebox adalha widget untuk menambahkan tiggi dan lebar kepada widget yg tidak punya tinggi dan lebar
+13.appbar
+bagian dari appbar
+a.leading biasa buat logo
+b.tittle ini adalah widget
+c.action biasanya button
+d.bottom biasanya dipake tab2
+e.flexible space diluar itu semua
+14. Card Widget: untuk mengelompokan sekumpulan data yang saling berkaitan
+---------------------------------------------------------
+Path lesson 						|
+A.flutter basic knowladge 1,2,82,83			|
+B.layout basic widget (3-10,12-15)			|
+C.other basic knowledge					|
+1.navigation (16,91,92)					|
+2.responsiv Design (11,21)				|
+3.More Basic Widget,TextField,floating Actinon Bar,	|
+Tab bar,Dropdwon,Button(19,20,24,25,27,56,73)		|
+							|
+D.Option but Must (State Management+SoftWare dev. 	|
+Related)						|
+1.Provider(42,43)					|
+2.Bloc (44,45,51,54,59,93)				|	
+3.Mobx(61)						|
+4.Cubit(85,89)						|
+5.MVVM Architecture (53)				|
+6.Unti Testing(67)					|
+7. Http Request Simulation(68-70)			|
+8.Bloc Testing(71.72)					|
+9. Cubist Testing(87)					|
+							|
+E.Optional						|
+1. Http Request-Post Method(36)				|
+2.Http Request -Get Method(37,38)			|
+							|
+F.Authentication +storage Option			|
+1.Firebase Auth(74,75)					|
+2.Biometric Auth(84)					|
+3.Firestore&Firebase Storage(76,77)			|
+4.Shared Preference	(41)				|
+5.HIve(57)						|
+							|
+Opional							|
+F. Animation Notification Map				|
+1. Rive(65)						|
+2.Flutter Animation(80,81)				|
+3.Lottie(86)						|
+4.OneSignal Notification(79)				|
+5.Here Map(96,100)					|
+
+topic yg lain
+17 Apbar Graddasi,18 Card Widget			|
+22 button gradasi,23 opasiti,26 heigh appbar,28 tapbar,	|
+29 QR code,30 button belah ketupat,31 gradasi oppacity,	|
+32 music sound,33 baca QR Code,34 font picture,		|
+35 Clip path,39 Switc and animates Switcher,		|
+40 animated paddi,46 Doc Commet,47 timer,		|
+48 custom progres bar,49 Product Card,			|
+50 Selecttable Text,Toggle Button Collor filter,	|
+52 ListView Builder+bloc,55 Dart snippet 		|
+(agar cepat coding),58 infinite List dengan 		|
+Bloc(terus kebawah retrive),60 Extension,		|
+62 Devision,63 Slider page View,			|
+64 slider with transition				|
+66. Accelblity (fitur bagi orang yang tidak melihat)	|
+78. Shimeer Effect,88. SuperCharge,90. Currency Format	|
+94. URL Launcher					|
+95. Guided Camera(biasanya ada templte foto diri)	|
+---------------------------------------------------------
+
