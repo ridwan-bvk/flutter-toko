@@ -1,0 +1,4202 @@
+-pada visible, fungsi yang sama tidak tampil
+IF(   nama =     nama [-1],0,1) --> pada visible
+cumulativeSum( IF(    nama =      nama [-1],0,1))-- pada compute
+-pada format bisa dihilangkan/ditambahkan salah satu
+[shortdate][time]
+===================================================================
+-fungsi filter : 
+untuk memfilter setelah di retrieve
+===================================================================
+-gaya if
+IF (ls_ceklist_dr = '1') THEN 
+	//ls_kriteria ="ceklist_dr = '1' AND (ceklist_coder = '0' OR ceklist_coder = '') AND (ceklist_verif ='0' OR ceklist_verif = '')"
+	ls_kriteria ="ceklist_dr = '1' AND ceklist_coder = '0' AND ceklist_verif ='0'"
+	//CEKLIST_DR = '1' AND (CEKLIST_CODER ='0' OR CEKLIST_CODER = NULL) AND (CEKLIST_VERIF='0' OR CEKLIST_VERIF = NULL)
+END IF
+===================================================================
+-memilah angka jadi  rupiah pada format diproperties
+ 1) #,##0
+ 2) #,##0.00
+
+===================================================================
+-jika tabel sama diakses dibeberpa kolom,memakai alias
+SELECT A.USERID,
+	   B.USERID,
+	   C.USERID
+  FROM USERDAT A,
+  	   USERDAT B,
+  	   USERDAT C,
+  	   TRANS_USERID
+ WHERE TRANS_USERID.USERID_DR		= A.USERID
+   AND TRANS_USERID.USERID_VERIF    = B.USERID
+   AND TRANS_USERID.USER			= C.USERID
+===================================================================
+-covert metode
+is_mode = CONVERT(CHAR(1), NULL),
+-
+
+DOKTER_PENGIRIM = CASE WHEN ( RUJUKAN_MASUK.NAMA_PERUJUK is not null ) THEN RUJUKAN_MASUK.NAMA_PERUJUK
+							 ELSE a.NM_DOKTER_RSF END
+===================================================================
+-untuk tidak membaca spasi (trim)
+Trim ( string {, removeallspaces } )
+===================================================================
+-cara retrif  powerobjectparm
+str_cetak_titipan lstr_cetak_titipan  --> struktur
+lstr_cetak_titipan = message.powerobjectparm
+dw_report.reset()
+dw_report.retrieve(lstr_cetak_titipan.tgl_awal, lstr_cetak_titipan.tgl_akhir)
+===================================================================
+-cara bikin jumlah dg query
+SELECT CR_BYR_REGISTRASI.KD_BAYAR,
+         CR_BYR_REGISTRASI.KD_JNS_CR_BYR,
+         TCARABAYAR.CARABAYAR,  
+         TJNS_CR_BAYAR.JNS_CR_BYR, 
+         JML_JNS_BARU_LAKI = SUM(CASE WHEN REGISTRASI_MASUK.KD_JNS_PASIEN = 'B' AND 
+                                           PASIEN.KELAMIN = '1' THEN 1
+                                 ELSE 0 END),
+         JML_JNS_BARU_PERE = SUM(CASE WHEN REGISTRASI_MASUK.KD_JNS_PASIEN = 'B' AND 
+                                           PASIEN.KELAMIN = '0' THEN 1
+                                 ELSE 0 END),
+         JML_JNS_LAMA_LAKI = SUM(CASE WHEN REGISTRASI_MASUK.KD_JNS_PASIEN = 'L' AND 
+                                           PASIEN.KELAMIN = '1' THEN 1
+                                 ELSE 0 END),
+         JML_JNS_LAMA_PERE = SUM(CASE WHEN REGISTRASI_MASUK.KD_JNS_PASIEN = 'L' AND 
+                                           PASIEN.KELAMIN = '0' THEN 1
+                                 ELSE 0 END),
+		   JML_KUNJ_BARU_LAKI = SUM(CASE WHEN REGISTRASI_MASUK.JNS_KUNJUNGAN = 'B' AND 
+                                           PASIEN.KELAMIN = '1' THEN 1
+                                 ELSE 0 END),
+		   JML_KUNJ_BARU_PERE = SUM(CASE WHEN REGISTRASI_MASUK.JNS_KUNJUNGAN = 'B' AND 
+                                           PASIEN.KELAMIN = '0' THEN 1
+                                 ELSE 0 END),
+		   JML_KUNJ_LAMA_LAKI = SUM(CASE WHEN REGISTRASI_MASUK.JNS_KUNJUNGAN = 'U' AND 
+                                           PASIEN.KELAMIN = '1' THEN 1
+                                 ELSE 0 END),
+		   JML_KUNJ_LAMA_PERE = SUM(CASE WHEN REGISTRASI_MASUK.JNS_KUNJUNGAN = 'U' AND 
+                                           PASIEN.KELAMIN = '0' THEN 1
+                                 ELSE 0 END) ,  
+         JML = SUM(1)      
+    FROM REGISTRASI_MASUK,   
+===================================================================
+--	logika data agar data yang pertama yang ada isinya selbinya d set 0
+IF (SELECT COUNT (*)
+			        	FROM  CASEMIX 
+			        	WHERE CASEMIX.KD_INST 			= @KD_INST
+			        	AND   CASEMIX.KD_SUB_INST		= @KD_SUB_INST
+			        	AND   CASEMIX.KD_DTL_SUB_INST	= @KD_DTL_SUB_INST
+			        	AND   CASEMIX.NO_PENGUNJUNG		= @NO_PENGUNJUNG
+			        	AND   CASEMIX.NO_KUNJUNGAN		= @NO_KUNJUNGAN
+			        	)>0
+			        	
+			         SELECT @TARIF_DRG = 0
+			         BEGIN
+						SELECT @TARIF_DRG = CASEMIX.TARIF_DRG
+						FROM CASEMIX
+						WHERE CASEMIX.KD_INST 			= @KD_INST
+			        	AND   CASEMIX.KD_SUB_INST		= @KD_SUB_INST
+			        	AND   CASEMIX.KD_DTL_SUB_INST	= @KD_DTL_SUB_INST
+			        	AND   CASEMIX.NO_PENGUNJUNG		= @NO_PENGUNJUNG
+			        	AND   CASEMIX.NO_KUNJUNGAN		= @NO_KUNJUNGAN       
+			         END
+			         	
+         IF EXISTS	(SELECT 1 
+										 	FROM  #Lap_Operasi
+										 	WHERE #Lap_Operasi.KD_INST 			= @KD_INST
+				    					 	AND   #Lap_Operasi.KD_SUB_INST		= @KD_SUB_INST
+				    					 	AND   #Lap_Operasi.KD_DTL_SUB_INST	= @KD_DTL_SUB_INST
+				    					 	AND   #Lap_Operasi.NO_PENGUNJUNG	= @NO_PENGUNJUNG
+				    					 	AND   #Lap_Operasi.NO_KUNJUNGAN		= @NO_KUNJUNGAN) 
+						  BEGIN
+								SELECT @TARIF_DRG = 0
+						  END
+							/*end added*/  
+===================================================================
+--untuk kasus sp crosstab,hal pertama yang dilakukan adalah
+1.keluarkan scip sp dengan cara : SELECT @vSQL								
+2.kemudian copi scrip di letak query crosstab 
+3. execute dengan sp dan query crostab diremark terlebih dahulu
+4. jika sesuai query yg muncul kemudian silahkan dimodified
+===================================================================
+--script untuk save as
+string ls_filename
+
+IF (dw_report.RowCount() > 0) THEN
+	dw_report.SaveAs(ls_filename,Excel!,TRUE)
+ELSE
+	MessageBox("Informasi", "Data Tidak Ada !")
+	Return
+END IF
+===================================================================
+--cara memindahkan dengan cata dikeyboard dengan enter dari filter ke filter
+event ue_keydown deng EVENT ID pbm_keydown
+IF (Key = KeyEnter!) THEN
+	ddlb_instalasi.SetFocus()
+END IF
+===================================================================
+--jika title  tidak mau di definisikan di dw,tp bisa di window ketika klik ya
+dw_report.object.t_tanggal.text = 'Tanggal : '+string(ldt_tgl_awal, 'dd/mm/yyyy')+' s/d '+string(ldt_tgl_akhir , 'dd/mm/yyyy')
+dw_report.object.header_t.text = 'LAPORAN PEMERIKSAAN '+upper(ll_ket_inst)
+===================================================================
+--funtion menu tambah di mirsa
+f_set_control_button
+===================================================================
+---cara membuat header dengan mendefinisikan pada scrip (uo,wind)
+contoh
+pada dw nama d propertis : tgl_cetak_t
+script
+dw_report.Object.tgl_cetak_t.Text = 'Tgl. Cetak : ' + String(f_datetime_server(), 'dd/mm/yyyy hh:mm')
+===================================================================
+--fungsi pos: Finds one string within another string.
+Pos ( string1, string2 {, start } )
+contoh: Pos(ddlb_stslunas.Text, '[')
+===================================================================
+--left join
+FROM BARANG LEFT OUTER JOIN USERDAT ON BARANG.USERID = USERDAT.USERID
+===================================================================
+--metode case wen
+
+CASE WHEN TARIF_BARANG_MEDIS.HARGA_DASAR IS NULL
+THEN  TARIF_BARANG_MEDIS.TARIF_BRG  
+ELSE  TARIF_BARANG_MEDIS.HARGA_DASAR - 
+	                                                            (TARIF_BARANG_MEDIS.HARGA_DASAR * TARIF_BARANG_MEDIS.DISCOUNT_PERSEN * 0.01) +
+	                                                            ((TARIF_BARANG_MEDIS.HARGA_DASAR - 
+	                                                              (TARIF_BARANG_MEDIS.HARGA_DASAR * TARIF_BARANG_MEDIS.DISCOUNT_PERSEN * 0.01)
+	                                                             ) * TARIF_BARANG_MEDIS.PPN * 0.01
+	                                                            )
+  END 
+===================================================================
+--cara replace hurup di sql
+            SELECT @HARUS_BAYAR_TEXT = convert(VARCHAR(30), CAST(@xHARUS_BAYAR AS MONEY),1)
+            SELECT @HARUS_BAYAR_TEXT = str_replace(@HARUS_BAYAR_TEXT,'.','#')
+            SELECT @HARUS_BAYAR_TEXT = str_replace(@HARUS_BAYAR_TEXT,',','.')
+            SELECT @HARUS_BAYAR_TEXT = str_replace(@HARUS_BAYAR_TEXT,'#',',')
+===================================================================
+--penggunan case
+if rb_bulan.checked = True Then
+	CHOOSE CASE lower(ddlb_bln.text)
+	CASE 'januari'
+		ls_bulan = '1'
+	CASE 'februari'
+		ls_bulan = '2'
+	CASE 'maret'
+		ls_bulan = '3'
+	CASE 'april'
+		ls_bulan = '4'
+	CASE 'mei'
+		ls_bulan = '5'
+	CASE 'juni'
+		ls_bulan = '6'
+	CASE 'juli'
+		ls_bulan = '7'
+	CASE 'agustus'	
+		ls_bulan = '8'
+	CASE 'september'
+		ls_bulan = '9'
+	CASE 'oktober'
+		ls_bulan = '10'
+	CASE 'november'
+		ls_bulan = '11'
+	CASE 'desember'
+		ls_bulan = '12'	 
+	END CHOOSE
+=================================================
+fungsi button:
+	f_set_control_button(uo_buttons, 0, 0, 0, 0, 0, 0, 1, 1)
+=================================================
+--modifay coloum
+SELECT KD_TRANSAKSI_MINTA,
+       NO_TRANSAKSI_MINTA,
+       KD_WAKTU_MAKAN,
+       KD_KELOMPOK_KELAS,
+       JNS_MKN_BHN,
+       KD_GOL_MKN_BHN,
+       KD_MKN_BHN,
+       KD_PABRIK_BHN,
+       JML_BHN,
+       JML_ORDER,
+       JNS_MKN_MINTA,
+       KD_GOL_MKN_MINTA,
+       KD_MKN_MINTA,
+       KD_PABRIK_MINTA,
+       STS_DPM
+  INTO #GZ_LINK_MINTA_BHN_PAS_KLP_KLS
+  FROM GZ_LINK_MINTA_BHN_PAS_KLP_KLS
+GO
+
+DROP TABLE GZ_LINK_MINTA_BHN_PAS_KLP_KLS
+GO
+
+CREATE TABLE dbo.GZ_LINK_MINTA_BHN_PAS_KLP_KLS
+	(
+	KD_TRANSAKSI_MINTA CHAR (2) NOT NULL,
+	NO_TRANSAKSI_MINTA CHAR (12) NOT NULL,
+	KD_WAKTU_MAKAN     CHAR (1) NOT NULL,
+	KD_KELOMPOK_KELAS  CHAR (2) NOT NULL,
+	JNS_MKN_BHN        CHAR (1) NOT NULL,
+	KD_GOL_MKN_BHN     CHAR (2) NOT NULL,
+	KD_MKN_BHN         CHAR (3) NOT NULL,
+	KD_PABRIK_BHN      CHAR (3) NOT NULL,
+	NO_URUT            INT DEFAULT 1 NOT NULL,
+	JML_BHN            DECIMAL (12,2) NOT NULL,
+	JML_ORDER          DECIMAL (12,2) NOT NULL,
+	JNS_MKN_MINTA      CHAR (1) NOT NULL,
+	KD_GOL_MKN_MINTA   CHAR (2) NOT NULL,
+	KD_MKN_MINTA       CHAR (3) NOT NULL,
+	KD_PABRIK_MINTA    CHAR (3) NOT NULL,
+	STS_DPM            CHAR (1) NOT NULL,
+	KD_BENTUK_MAKANAN_DIET CHAR (2) NULL,
+	CONSTRAINT PK_GZ_LINK_MINTA_BHN_PAS_KLP PRIMARY KEY (KD_TRANSAKSI_MINTA,NO_TRANSAKSI_MINTA,KD_WAKTU_MAKAN,KD_KELOMPOK_KELAS,JNS_MKN_BHN,KD_GOL_MKN_BHN,KD_MKN_BHN,KD_PABRIK_BHN,NO_URUT)
+	)
+GO
+
+INSERT
+  INTO GZ_LINK_MINTA_BHN_PAS_KLP_KLS
+       ( KD_TRANSAKSI_MINTA,
+         NO_TRANSAKSI_MINTA,
+         KD_WAKTU_MAKAN,
+         KD_KELOMPOK_KELAS,
+         JNS_MKN_BHN,
+         KD_GOL_MKN_BHN,
+         KD_MKN_BHN,
+         KD_PABRIK_BHN,
+         NO_URUT,
+         JML_BHN,
+         JML_ORDER,
+         JNS_MKN_MINTA,
+         KD_GOL_MKN_MINTA,
+         KD_MKN_MINTA,
+         KD_PABRIK_MINTA,
+         STS_DPM )
+SELECT KD_TRANSAKSI_MINTA,
+       NO_TRANSAKSI_MINTA,
+       KD_WAKTU_MAKAN,
+       KD_KELOMPOK_KELAS,
+       JNS_MKN_BHN,
+       KD_GOL_MKN_BHN,
+       KD_MKN_BHN,
+       KD_PABRIK_BHN,
+       1,
+       JML_BHN,
+       JML_ORDER,
+       JNS_MKN_MINTA,
+       KD_GOL_MKN_MINTA,
+       KD_MKN_MINTA,
+       KD_PABRIK_MINTA,
+       STS_DPM
+  FROM #GZ_LINK_MINTA_BHN_PAS_KLP_KLS
+GO
+
+DROP TABLE #GZ_LINK_MINTA_BHN_PAS_KLP_KLS
+GO
+=========================================================
+modified table temporary untuk select dan insert
+=========================================================
+SELECT kd_modul,
+	   no_index ,
+	   kd_grp 	= 'GIZ_0204',
+ 	   enabled	= 'T',
+ 	   visibled	= 'T'
+ INTO #security_groups
+  FROM security_menu
+ WHERE no_index LIKE '0950%%'
+
+INSERT INTO security_groups (kd_modul, no_index, kd_grp, enabled, visibled)
+SELECT kd_modul,
+	   no_index ,
+	   kd_grp,
+ 	   enabled,
+ 	   visibled	
+  FROM #security_groups
+  DROP TABLE #security_groups
+=========================================================
+--fungsi return
+=========================================================
+untuk return -1 ---> -1 artinya dia mngulang ke atas
+	---> 1 artinya dia mngelanjutkan
+
+untuk open witparm
+
+=========================================================
+pengambilan hari dijadikan bulan
+=========================================================
+ldt_tgl_sekarang = f_datetime_server()
+					
+ls_day = String(DAY(Date(ldt_tgl_sekarang)))
+										
+					CHOOSE CASE MONTH(DAte(ldt_tgl_sekarang))
+						CASE  1  
+							ls_bulan = 'Januari'
+						CASE  2  
+							ls_bulan = 'Februari'
+						CASE  3  
+							ls_bulan = 'Maret'
+						CASE  4  
+							ls_bulan = 'April'
+						CASE  5  
+							ls_bulan = 'Mei'
+						CASE  6  
+							ls_bulan = 'Juni'
+						CASE  7  
+							ls_bulan = 'Juli'
+						CASE  8  
+							ls_bulan = 'Agustus'
+						CASE  9  
+							ls_bulan = 'September'
+						CASE 10  
+							ls_bulan = 'Oktober'
+						CASE 11  
+							ls_bulan = 'November'
+						CASE 12  
+							ls_bulan = 'Desember'
+					END CHOOSE
+								
+					ls_tahun = String(Year(Date(ldt_tgl_sekarang)))
+				END IF
+=========================================================
+contoh pengambilan tahun dengan case
+=========================================================
+SELECT KODE = CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 1 THEN 'A'
+                              ELSE
+                                  CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 3 THEN 'B'
+                                  ELSE
+                                      CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 5 THEN 'C'
+                                      ELSE
+                                          CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 12 THEN 'D'
+                                          ELSE
+                                              CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 25 THEN 'E'
+                                              ELSE
+                                                  CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 45 THEN 'F'
+                                                  ELSE
+                                                      'G'
+                                                  END
+                                              END
+                                          END
+                                      END
+                                  END
+                              END,
+       JANUARI = IsNull(SUM(CASE WHEN DATEPART(MONTH,PASIEN.TGL_REG) = 1 THEN 1 ELSE 0 END), 0),
+       FEBRUARI = IsNull(SUM(CASE WHEN DATEPART(MONTH,PASIEN.TGL_REG) = 2 THEN 1 ELSE 0 END), 0),
+       MARET = IsNull(SUM(CASE WHEN DATEPART(MONTH,PASIEN.TGL_REG) = 3 THEN 1 ELSE 0 END), 0),
+       APRIL = IsNull(SUM(CASE WHEN DATEPART(MONTH,PASIEN.TGL_REG) = 4 THEN 1 ELSE 0 END), 0),
+       MEI = IsNull(SUM(CASE WHEN DATEPART(MONTH,PASIEN.TGL_REG) = 5 THEN 1 ELSE 0 END), 0),
+       JUNI = IsNull(SUM(CASE WHEN DATEPART(MONTH,PASIEN.TGL_REG) = 6 THEN 1 ELSE 0 END), 0),
+       JULI = IsNull(SUM(CASE WHEN DATEPART(MONTH,PASIEN.TGL_REG) = 7 THEN 1 ELSE 0 END), 0),
+       AGUSTUS = IsNull(SUM(CASE WHEN DATEPART(MONTH,PASIEN.TGL_REG) = 8 THEN 1 ELSE 0 END), 0),
+       SEPTEMBER = IsNull(SUM(CASE WHEN DATEPART(MONTH,PASIEN.TGL_REG) = 9 THEN 1 ELSE 0 END), 0),
+       OKTOBER = IsNull(SUM(CASE WHEN DATEPART(MONTH,PASIEN.TGL_REG) = 10 THEN 1 ELSE 0 END), 0),
+       NOVEMBER = IsNull(SUM(CASE WHEN DATEPART(MONTH,PASIEN.TGL_REG) = 11 THEN 1 ELSE 0 END), 0),
+       DESEMBER = IsNull(SUM(CASE WHEN DATEPART(MONTH,PASIEN.TGL_REG) = 12 THEN 1 ELSE 0 END), 0),
+       UMUR = CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 1 THEN '0 - 1 Tahun'
+                              ELSE
+                                  CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 3 THEN '1 - 3 Tahun'
+                                  ELSE
+                                      CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 5 THEN '3 - 5 Tahun'
+                                      ELSE
+                                          CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 12 THEN '5 - 12 Tahun'
+                                          ELSE
+                                              CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 25 THEN '12 - 25 Tahun'
+                                              ELSE
+                                                  CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 45 THEN '25 - 45 Tahun'
+                                                  ELSE
+                                                      '> 45 Tahun'
+                                                  END
+                                              END
+                                          END
+                                      END
+                                  END
+                              END
+  FROM PASIEN (INDEX IDX_KD_INST_TGL_REG),
+       INSTALASI,
+       SHARE_STATUS,
+       CR_BYR_REGISTRASI
+ WHERE INSTALASI.KD_INST = PASIEN.KD_INST
+   AND SHARE_STATUS.KD_INST = PASIEN.KD_INST
+   AND SHARE_STATUS.KD_SUB_INST = PASIEN.KD_SUB_INST
+   AND SHARE_STATUS.KD_DTL_SUB_INST = PASIEN.KD_DTL_SUB_INST
+   AND SHARE_STATUS.NO_PENGUNJUNG = PASIEN.NO_PENGUNJUNG
+   AND SHARE_STATUS.NO_KUNJUNGAN = PASIEN.NO_KUNJUNGAN
+   AND SHARE_STATUS.STATUS_REGISTRASI <> '4'
+   AND CR_BYR_REGISTRASI.KD_INST = PASIEN.KD_INST
+   AND CR_BYR_REGISTRASI.KD_SUB_INST = PASIEN.KD_SUB_INST
+   AND CR_BYR_REGISTRASI.KD_DTL_SUB_INST = PASIEN.KD_DTL_SUB_INST
+   AND CR_BYR_REGISTRASI.NO_PENGUNJUNG = PASIEN.NO_PENGUNJUNG
+   AND CR_BYR_REGISTRASI.NO_KUNJUNGAN = PASIEN.NO_KUNJUNGAN
+   AND CR_BYR_REGISTRASI.STATUS_UTAMA = '1'
+   AND CR_BYR_REGISTRASI.STATUS_AKHIR = '1'
+   AND PASIEN.TGL_REG >= '2016-01-01'
+   AND PASIEN.TGL_REG < '2017-01-01'
+   AND PASIEN.KD_INST = '01'
+   AND EXISTS (SELECT 1
+                 FROM REGISTRASI_MASUK
+                WHERE REGISTRASI_MASUK.KD_INST = PASIEN.KD_INST
+                  AND REGISTRASI_MASUK.KD_SUB_INST = PASIEN.KD_SUB_INST
+                  AND REGISTRASI_MASUK.KD_DTL_SUB_INST = PASIEN.KD_DTL_SUB_INST
+                  AND REGISTRASI_MASUK.NO_PENGUNJUNG = PASIEN.NO_PENGUNJUNG
+                  AND REGISTRASI_MASUK.NO_KUNJUNGAN = PASIEN.NO_KUNJUNGAN
+              )
+ GROUP BY CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 1 THEN 'A'
+              ELSE
+                  CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 3 THEN 'B'
+                  ELSE
+                      CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 5 THEN 'C'
+                      ELSE
+                          CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 12 THEN 'D'
+                          ELSE
+                              CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 25 THEN 'E'
+                              ELSE
+                                  CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 45 THEN 'F'
+                                  ELSE
+                                      'G'
+                                  END
+                              END
+                          END
+                      END
+                  END
+              END,
+              CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 1 THEN '0 - 1 Tahun'
+              ELSE
+                  CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 3 THEN '1 - 3 Tahun'
+                  ELSE
+                      CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 5 THEN '3 - 5 Tahun'
+                      ELSE
+                          CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 12 THEN '5 - 12 Tahun'
+                          ELSE
+                              CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 25 THEN '12 - 25 Tahun'
+                              ELSE
+                                  CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 45 THEN '25 - 45 Tahun'
+                                  ELSE
+                                      '> 45 Tahun'
+                                  END
+                              END
+                          END
+                      END
+                  END
+              END 
+
+
+=========================================================
+/*contoh pengambilan dan pemotongan data pada query*/
+=========================================================
+IF OBJECT_ID ('dbo.fc_CvNumToString') IS NOT NULL
+	DROP FUNCTION dbo.fc_CvNumToString
+GO
+
+CREATE function fc_CvNumToString  
+  (@DATA     NUMERIC(20,8),  
+   @FORMAT   INT,
+   @FLAG	 CHAR(1)
+   )  
+  returns varchar (20)  
+  -- select dbo.fc_CvNumToString (188.000, 1, '0')
+as  
+  
+begin  
+  DECLARE	@pos_titik 		INT,
+  			@pos_nol		INT,
+  			@str			VARCHAR(20),
+  			@str_koma		VARCHAR(8),
+  			@str_dpn_koma	VARCHAR(12),
+  			@pembulatan		CHAR(1),
+  			@pembulatan1	CHAR(1),
+  			@STRING_VALUE 	VARCHAR(20)
+  			
+  			
+  SELECT @DATA = ROUND(@DATA,@FORMAT)
+
+  SET @str = CONVERT(VARCHAR,@DATA)
+
+  SET @pos_titik = CHARINDEX('.',@str)
+  
+  SET @str_dpn_koma = LEFT(@str,@pos_titik)
+  
+  SET @str_koma = SUBSTRING(@str,@pos_titik + 1, @FORMAT)	
+
+  SET @STRING_VALUE = @str_dpn_koma +  @str_koma
+  
+  IF(@FLAG = '1' )
+  BEGIN
+  	SELECT @STRING_VALUE = @STRING_VALUE + '00000000'
+  	
+  	SELECT @STRING_VALUE = LEFT(@STRING_VALUE, LEN(@str_dpn_koma) + @FORMAT)
+  END
+  ELSE
+  BEGIN
+  	SET 	@pos_nol = CHARINDEX('0', @str_koma)
+  	SET		@pos_nol = LEN( @str_dpn_koma) + @pos_nol
+  	SELECT	@STRING_VALUE = LEFT(@STRING_VALUE, @pos_nol - 1)
+  END
+  	
+  
+  IF RIGHT(@STRING_VALUE, 1) = "."
+  BEGIN
+  	SELECT @STRING_VALUE = LEFT(@STRING_VALUE, LEN(@STRING_VALUE) -1)
+  END  
+
+  return @STRING_VALUE 
+
+end 
+
+
+
+GO
+Keterangan:
+CHARINDtgl 15 22171EX() seperti POS
+
+======
+metode menghitung otoatis tanggal
+=====
+	ll_wktprogram = this.getitemnumber( row,"waktu_program")
+	ldt_tgl_akhir =  this.getitemdatetime( row,"tgl_awal_pnddkn")
+	ll_jmlh_tgl = long(ll_wktprogram) +long( string(datetime(data),'yyyy'))
+	ldt_tgl_akhir_set=Date(string (ldt_tgl_akhir,'dd/mm')+'/'+string(ll_jmlh_tgl))
+	this.setitem(row,"tgl_akhir_pnddkn",ldt_tgl_akhir_set)
+
+
+==============================================
+LOOPING SET DEFULT METHODE
+==============================================
+long li_row,li_max
+string ls_default,ls_sts_aktif
+
+IF dwo.name="as_default" THEN
+	If data = '1' Then 
+		li_row = 1
+		li_max = This.rowcount( )
+		Do While (li_max >= li_row)
+			If (li_row <> row) Then
+				This.SetItem(li_row,"as_default", "0")
+			End If
+			li_row++
+		Loop
+	else
+		This.SetItem(1,"as_default", "1")
+	End If
+	
+	This.AcceptText()
+End If
+===========================
+ngambil row pada scroll bar
+===========================
+di pfc scrollvertical
+string ls_row
+ls_row = this.object.datawindow.FirstRowOnPage
+messagebox("",ls_row)
+========================================
+string execute dan metode looping string pda sp
+======================================
+WHILE(@@SQLSTATUS = 0)
+         
+	     BEGIN
+	     
+	     SELECT  @ll_row = 0
+			  WHILE @ll_row < 24
+			  BEGIN
+			  
+			     SELECT @kd_brks = CONVERT(CHAR(2),@ll_row + 1)
+			    
+			     IF EXISTS(SELECT 1
+			                 FROM LENGKAP_BERKAS_RM_MUTASI
+			                WHERE NORM  =@norm)
+			     BEGIN
+				     IF  (SELECT count(*) 
+				                       	 FROM LENGKAP_BERKAS_RM_MUTASI
+				                        WHERE KD_LENGKAP	 =	RIGHT ('0' + @kd_brks ,2)
+				                       	  AND KD_DOKTER_RSF  = @kd_dokter_rsf
+				                       	  AND NORM = @norm
+				                       	 ) > 0
+					 	BEGIN 
+					 	 --	SELECT '1',@norm, @kd_dokter_rsf,@kd_brks
+					 		SELECT @lengkap_1 = 1 
+					 		SELECT @lengkap_0 = 0
+					 	END 
+					 ELSE
+					  	BEGIN
+					  	 --	SELECT '2',@norm, @kd_dokter_rsf,@kd_brks
+					  		SELECT @lengkap_0 = 1
+					  		SELECT @lengkap_1 = 0  
+					  	END
+						 
+				 END 
+			  
+			   	IF NOT EXISTS(SELECT 1
+			                   FROM #TMP_BERKAS
+			                  WHERE KD_DOKTER  = @kd_dokter_rsf)
+				     BEGIN
+				     	SELECT @str = "INSERT INTO #TMP_BERKAS (KD_DOKTER,	KOLOM_"+ @kd_brks +"L, KOLOM_" + @kd_brks + "TL) VALUES (" + 
+				     						"'" + @kd_dokter_rsf+ "'," + CONVERT(VARCHAR(4),@lengkap_1) + "," + CONVERT(VARCHAR(4),@lengkap_0)+ ")"
+				     	EXECUTE (@str)
+				     END
+				      
+			     ELSE
+				     BEGIN
+						
+						IF @lengkap_1 = 1 AND  @lengkap_0 = 0
+						BEGIN
+					     	SELECT @str = "UPDATE #TMP_BERKAS SET KOLOM_"+@kd_brks+"L = (KOLOM_"+@kd_brks+"L + 1), KOLOM_"+@kd_brks+"TL =  KOLOM_"+@kd_brks+"TL " +
+					     				   " WHERE KD_DOKTER = '"+@kd_dokter_rsf+ "'"
+					    --  SELECT 'A', @str	   
+				     		EXECUTE (@str)
+				     	END
+				     	ELSE
+				     	BEGIN
+				     		SELECT @str = "UPDATE #TMP_BERKAS SET KOLOM_"+@kd_brks+"L = KOLOM_"+@kd_brks + "L, KOLOM_"+@kd_brks+"TL = (KOLOM_"+@kd_brks+"TL + 1)" +
+					     				   " WHERE KD_DOKTER = '"+@kd_dokter_rsf+ "'"
+					      --	SELECT 'B',@str	   
+				     		EXECUTE (@str)
+				     	END
+				     END
+		 SELECT @ll_row = @ll_row + 1 	      
+		 END 
+	     FETCH CUR_TRANS
+	      INTO @norm,
+		       @kd_dokter_rsf		       
+		  	  
+		   
+    END
+==========================================================================================================
+membndingkan tanggal
+IF DaysAfter(date(ldt_tglawal), date(ldt_tglakhir)) > 31 THEN
+===============
+filter script
+===============
+ls_kode	= LEFT(ddlb_jenis.text,2)
+ddlb_tipe.Reset()
+DECLARE CUR_TIPE CURSOR FOR
+SELECT KODE,
+		 NAMA
+ FROM TMASTER_TIPE_AKREDITASI
+WHERE STS_AKTIF	= '1'
+  AND KODE_JNS		= :ls_kode;
+OPEN  CUR_TIPE;
+FETCH CUR_TIPE INTO :ls_kode, :ls_nama;
+DO WHILE (SQLCA.SQLCode = 0)
+	ddlb_tipe.AddItem(ls_kode+'. '+ls_nama)
+	
+	FETCH CUR_TIPE INTO :ls_kode, :ls_nama;
+LOOP
+CLOSE CUR_TIPE;
+
+ddlb_tipe.SelectItem(1)
+
+
+=====================
+alternatif enter
+=====================
+CHAR (13) bisa jadi alternatif enter
+=====================
+kerangka SP
+=====================
+IF OBJECT_ID ('dbo.sp_trans_akreditasi') IS NOT NULL
+	DROP PROCEDURE dbo.sp_trans_akreditasi
+GO
+
+CREATE PROCEDURE dbo.sp_trans_akreditasi
+/*******************************************************/
+/* Object-ID     : sp_trans_akreditasi                 */
+/* Module        : Pelayanan                           */
+/* Revise Number : 00       						   */
+/* Created By    : DANI                               */
+/* Created At    : 18/12/2014                          */
+/* Description   : Membuat Transaksi Akreditasi 	   */
+/* Ass           : -                             	   */
+/*******************************************************/
+
+@P_TGL_AWAL    DATETIME,
+@P_TGL_AKHIR   DATETIME,
+@P_KODE_GUDANG CHAR(3)
+
+AS
+BEGIN
+    SET TRANSACTION ISOLATION LEVEL 0
+	
+    DECLARE 
+    
+    CREATE TABLE #TMP_1 
+                 (
+                  
+	              )
+	            
+	DECLARE CUR_TRANS CURSOR FOR
+		(
+			Query_utama
+		)
+        
+	OPEN CUR_TRANS
+		 FETCH CUR_TRANS
+		  INTO @KD_JNS_TRANSAKSI,
+		       @NO_TRANSAKSI,
+		       @NO_RESEP
+         WHILE(@@SQLSTATUS = 0)
+	     BEGIN
+	     
+	         
+	     FETCH CUR_TRANS
+	      INTO @KD_JNS_TRANSAKSI,
+	           @NO_TRANSAKSI,
+			   @NO_RESEP
+    	 END
+    CLOSE CUR_TRANS
+	DEALLOCATE CURSOR CUR_TRANS
+	
+	SELECT #TMP_1.JENIS_BAYAR,
+	       #TMP_1.NM_JENIS_BAYAR,
+	       #TMP_1.KD_ASAL_RESEP,
+           #TMP_1.NAMA_POLI,
+           #TMP_1.LEMBAR_R,
+           --#TMP_1.NO_RESEP,
+           UANG_R = #TMP_1.TOTAL_TUSLAG,
+           #TMP_1.TOTAL_TGH,
+           #TMP_1.HANDLING
+         FROM #TMP_1
+     ORDER BY #TMP_1.JENIS_BAYAR,
+              #TMP_1.NAMA_POLI
+END
+
+
+GO
+=============================
+execute pada sp
+=============================
+SQLCA.autocommit = true /* add by aan, 28 nov 2011*/
+DECLARE Insert_casemix PROCEDURE FOR sp_Batch_ICD_9_CM_NOREG
+	@KD_INST         = :ivs_i,
+	@KD_SUB_INST     = :ivs_si,
+	@KD_DTL_SUB_INST = :ivs_dsi,
+	@NO_PENGUNJUNG   = :ivs_p,
+	@NO_KUNJUNGAN    = :ivs_k
+USING SQLCA;
+EXECUTE Insert_casemix;
+IF (SQLCA.SQLCode > -1) THEN
+	CLOSE Insert_casemix;
+	Commit Using SQLCA;
+ELSE
+	ll_code     = SQLCA.SQLDBCode
+	gvs_dberror = SQLCA.SQLErrText
+	CLOSE Insert_casemix;
+	RollBack Using SQLCA;
+	gnv_MsgBox.MessageBox("Error insert_casemix No. : "+String(ll_code), gvs_dberror,StopSign!)
+	Return -1
+END IF
+SQLCA.autocommit = FALSE /* add by aan, 28 nov 2011*/
+
+=======================
+cara memasukan gambar
+=======================
+//INT value
+//string ls_path, ls_filename,ls_data
+//IF (dwo.name = "b_kamus" )THEN
+//	value = GetFileOpenName("Pilih File", ls_path, ls_filename,  "DOC", &
+//   + "Graphic Files (*.jpg),*.png;*.jpg;*.jpeg," &
+//   + "PNG Files (*.PNG),*.png,")
+//	ls_data = TRIM(ls_path)
+//	this.setitem( row,"kamus", ls_data)
+//	
+//END IF
+//
+IF (dwo.name = "b_kamus" )THEN
+/* script for upload picture */
+
+long ll_filelength
+integer i, li_cnt, li_rtn, li_filenum
+string ls_dir, ls_docpath, ls_docname[]
+string ls_lot_no
+ls_dir = GetCurrentDirectory( )
+        
+ li_rtn = GetFileOpenName("Upload File",&
+ is_path, ls_docname[], "Graphic Files", &
+ + "JPG Files (*.jpg),*.jpg," &
+ + "BMP Files (*.bmp),*.bmp," &
+ + "JPEG Files (*.jpeg),*.jpeg," &
+ + "GIF Files (*.gif), *.gif", &
+ ls_dir, 18)
+        
+ IF li_rtn < 1 THEN return
+    
+ li_cnt = Upperbound(ls_docname)
+    
+  if li_cnt = 1 then
+        ll_filelength = FileLength(is_path)
+        
+     if ceiling(ll_filelength / 1000 ) > 400 then
+            messagebox("Peringatan", "File upload terlalu besar ~rSilakan upload file picture dengan ukuran maksimal 200 Kb",stopsign!)
+            return
+        end if
+	  if ceiling(ll_filelength / 1000 ) > 400 then
+            messagebox("Peringatan", "File upload terlalu besar ~rSilakan upload file picture dengan ukuran maksimal 200 Kb",stopsign!)
+            return
+        end if
+        
+ //    p_1.picturename = is_path
+//        sle_browse.text = ls_docname[1]
+        is_filename		= ls_docname[1]
+        
+   end if
+  /* script fot upload blob */
+
+//GETTING THE FILE INTO THE PICTURE CONTROL
+long flen, bytes_read, new_pos, ll_len
+blob lblob_b, lblob_tot_b
+integer  loops
+string ls_kode,ls_kode_jenis
+ // Set a wait cursor
+ SetPointer(HourGlass!)
+
+ // GET THE FILE LENGHT SO WE CAN CALCULATE THE READ LOOP
+ flen = FileLength(is_filename)
+
+ //CHECKING IF THE IMAGE FILE IS OK
+ IF flen < 100 THEN
+// RETURN -1
+ END IF
+
+ //OPENING THE IMAGE FILE
+ li_FileNum = FileOpen(is_filename, StreamMode!, Read!, LockRead!)
+
+ // Determine how many times to call FileRead
+ IF flen > 32765 THEN
+      IF MOD(flen, 32765) = 0 THEN
+            loops = flen/32765
+      ELSE
+            loops = (flen/32765) + 1
+      END IF
+ ELSE
+      loops = 1
+ END IF
+// messagebox('',string(lblob_b))
+  // READ THE FILE INTO THE BLOB VARIABLE
+ new_pos = 1
+ FOR i = 1 to loops
+      bytes_read = FileRead(li_FileNum, lblob_b)
+      lblob_tot_b = lblob_tot_b + lblob_b
+ NEXT
+//messagebox('',string(lblob_tot_b))
+ //PASSING THE CONTENT OF THE FILE INTO A INSTANCE BLOB VARIABLE
+// iblob_picture = lblob_tot_b
+
+ //CLOSING THE IMAGE FILE
+ FileClose(li_FileNum)
+
+ls_kode 			= this.getitemstring(row, 'kode')
+ls_kode_jenis 	= this.getitemstring(row, 'kode_jns')
+
+updateblob TMASTER_TIPE_AKREDITASI 
+          set GAMBAR_KAMUS = :lblob_tot_b
+     where TMASTER_TIPE_AKREDITASI.KODE 			= :ls_kode
+	  AND  TMASTER_TIPE_AKREDITASI.KODE_JNS	=:ls_kode_jenis;
+commit using sqlca;
+
+this.setitem( row,"kamus", ls_docname)
+END IF
+=================
+cara select gambar
+=====================
+
+SELECTBLOB GAMBAR_KAMUS
+INTO 	:bImage
+  FROM TMASTER_TIPE_AKREDITASI
+  WHERE KODE		  =:ls_kd_tipe
+     AND KODE_JNS =:ls_kd_jenis
+	 USING SQLCA;
+
+p_gambar.setpicture(bImage)
+====================================
+membuat kolom cuma string
+====================================
+pada pbm keydown
+Int 	i
+String	ls_data, ls_temp_data
+
+Do While i <= len(as_data)
+	  ls_data = mid(as_data, i, 1)
+	If Match(ls_data, "[0-9]") Then
+		ls_temp_data = as_data
+	else
+		If len(as_data) > 1 Then 
+			ls_temp_data = mid(as_data, 1, i - 1 ) + mid(as_data, i + 1, len(as_data) - (i - 1))
+		Else
+			setnull(ls_temp_data)
+		End If
+		
+		Exit
+	End If 
+	  
+		i += 1
+Loop
+
+Return ls_temp_data
+============
+CONVERT TGL
+=============
+
+
+SELECT @TGL_AWAL  = CONVERT(DATETIME, CONVERT(CHAR(8), @TGL_AWAL, 112) + ' ' + CONVERT(CHAR(8), @TGL_AWAL, 108))
+    SELECT @TGL_AKHIR = CONVERT(DATETIME, CONVERT(CHAR(8), @TGL_AKHIR, 112) + ' ' + CONVERT(CHAR(8), @TGL_AKHIR, 108))
+
+====================
+FUNCTION SUARA DI PB
+====================
+define di external variabel
+--------------------------
+external variabel
+Function boolean sndPlaySoundA (string SoundName, uint Flags) Library "WINMM.DLL" alias for "sndPlaySoundA;Ansi"
+Function uint waveOutGetNumDevs () Library "WINMM.DLL"
+
+Function Long mciExecute  (String lpstrCommand) Library "winmm.dll" alias for "mciExecute;Ansi" 
+Function Long mciGetErrorStringA (Long dwError, REF String lpstrBuffer, Long uLength) Library "winmm.dll" alias for "mciGetErrorStringA;Ansi"
+Function Long mciSendStringA(String lpstrCommand, Ref String lpstrReturnString, Long uReturnLength, Long hwndCallback)  Library "winmm.dll" alias for "mciSendStringA;Ansi"
+Function integer GetShortPathNameA (String lsLongPath, Ref String lsShortPath, integer buflen) Library 'kernel32.dll' alias for "GetShortPathNameA;Ansi" 
+
+
+
+/**event ue_panggil**/
+Time    start_time, end_time
+string  ls_file, ls_noantrian, ls_angka, ls_loket
+string  ls_daftar[]
+integer j, li_count
+uint    lui_NumDevs, l_mode
+
+
+lui_NumDevs = WaveOutGetNumDevs()
+IF lui_NumDevs < 0 THEN
+	messagebox('Informasi','Device tidak tersedia')
+	cb_1.enabled = false
+	cb_3.enabled = true
+	return
+end if
+
+//try
+	do while ii_count < 1
+		yield()
+		ib_stop = false
+	
+		setnull(ls_noantrian)
+		
+		SELECT "NO_ANTRIAN", "LOKET"
+		  INTO :ls_noantrian, :ls_loket
+		  FROM "ANTRIAN"
+		 WHERE "TGL_PANGGIL" = (SELECT MIN("TGL_PANGGIL")
+										  FROM "ANTRIAN" a
+										 WHERE "STS_PANGGIL" = '1')
+		 USING SQLCA;
+		
+		if not(ISNULL(ls_noantrian) or trim(ls_noantrian) = '') then
+			
+			sndPlaySoundA( "suara\call.WAV", 0 )
+			sndPlaySoundA( "suara\pasien dengan nomer urut.WAV", 0 )
+			
+			j = 1
+			do while j <= len(ls_noantrian)
+				yield()
+				
+				ls_angka = mid(ls_noantrian,j,1)
+				
+				if ls_angka = '0' then
+					ls_file = 'NOL.WAV'
+				else
+					ls_file = upper(ls_angka)+'.WAV'
+				end if
+				
+				sndPlaySoundA( "suara\"+ls_file, 0 )
+				j = j + 1
+			loop
+			
+			sndPlaySoundA( "suara\DI LOKET.WAV", 0 )
+			
+			ls_file = ls_loket+".WAV"
+			sndPlaySoundA( "suara\"+ls_file, 0 )
+			sndPlaySoundA( "suara\terimakasih.WAV", 0 )
+			
+			UPDATE "ANTRIAN"
+				SET "STS_PANGGIL" = '0'
+			 WHERE "NO_ANTRIAN"  = :ls_noantrian
+			 USING SQLCA;
+			 
+			if SQLCA.SQLCODE = 0 THEN
+				COMMIT USING SQLCA;
+			else
+				ROLLBACK USING SQLCA;
+			end if
+		end if
+		
+		start_time = time(today())
+		end_time = time(today())
+		DO WHILE (SecondsAfter(start_time, end_time) <= 2 and SecondsAfter(start_time, end_time) >= 0) 
+			Yield()
+			end_time = time(today())
+		LOOP
+	loop
+
+ib_stop = true
+//finally
+
+//end try
+
+=================================
+BRIDGING(10.32 23/04/2021)
+=================================
+
+/******bridging*************/
+	IF ISNULL(ls_no_surat_jaminan) OR ls_no_surat_jaminan = "" THEN
+		ll_count = f_serv_create_no_sjp_vclaim_sep(is_kdbayar, &
+													  is_kdjnscrbyr, &
+													  is_kdpaketjaminan, &
+													  ls_poli_tujuan, &
+													  istr_sep.tgl_sep, &
+													  istr_sep.no_peserta, &
+													  ls_hub_kel, &
+													  ls_nama, &
+													  ls_norm, &
+													  ldt_tgl_lahir, &
+													  ls_kelamin, &
+													  istr_sep.tgl_sep, &
+													  ldt_tgl_rujukan, &
+													  ls_no_surat_rujukan, &
+													  ls_kd_ppk, &
+													  ls_kd_icd, &
+													  ls_no_surat_jaminan, &
+													  ls_kd_ppk_def, &
+													  '', &
+													  ls_kd_kelas, &
+													  '', &
+													  ls_errmessage, &
+													  ls_no_telp, &
+													  ls_sts_kejadian_ll,&
+													  ls_penjamin_ll, &
+													  ls_lokasi_ll, &
+													  ls_sts_cob, &
+													  ls_catatan, &
+													  istr_sep.jns_pelayanan, &
+													  ls_sts_poli_eksekutif, &
+													  ls_sts_katarak, &
+													  ldt_tgl_ll, &
+													  ls_no_sep_suplesi, &
+													  ls_kode_dokter_bpjs, &
+													  ls_no_kontrol, &
+													  ls_asal_rujukan &
+													 )
+	ELSE
+		ll_count = f_serv_cari_sep(is_kdbayar, is_kdjnscrbyr,is_kdpaketjaminan,ls_no_surat_jaminan,ls_error)
+		
+		IF ll_count > 0 THEN
+			IF ls_error = '200' THEN
+				ll_count = f_serv_update_no_sjp_vclaim_sep(is_kdbayar, &
+													  is_kdjnscrbyr, &
+													  is_kdpaketjaminan, &
+													  ls_poli_tujuan, &
+													  istr_sep.tgl_sep, &
+													  istr_sep.no_peserta, &
+													  ls_hub_kel, &
+													  ls_nama, &
+													  ls_norm, &
+													  ldt_tgl_lahir, &
+													  ls_kelamin, &
+													  istr_sep.tgl_sep, &
+													  ldt_tgl_rujukan, &
+													  ls_no_surat_rujukan, &
+													  ls_kd_ppk, &
+													  ls_kd_icd, &
+													  ls_no_surat_jaminan, &
+													  ls_kd_ppk_def, &
+													  '', &
+													  ls_kd_kelas, &
+													  '', &
+													  ls_errmessage, &
+													  ls_no_telp, &
+													  ls_sts_kejadian_ll,&
+													  ls_penjamin_ll, &
+													  ls_lokasi_ll, &
+													  ls_sts_cob, &
+													  ls_catatan, &
+													  istr_sep.jns_pelayanan, &
+													  ls_sts_poli_eksekutif, &
+													  ls_no_surat_jaminan, &
+													  ls_sts_katarak, &
+													  ldt_tgl_ll, &
+													  ls_no_sep_suplesi, &
+													  ls_kode_dokter_bpjs, &
+													  ls_no_kontrol &
+													 )
+					IF ll_count > 0 THEN
+						ll_count = 2
+					END IF
+			END IF
+		END IF
+	END IF
+	
+	IF ll_count > 0 THEN
+		IF ll_count = 1 THEN
+			gnv_msgbox.MessageBox("Informasi","SEP Berhasil Dibuat Dengan No.SEP "+ls_no_surat_jaminan)
+		ELSE
+			gnv_msgbox.MessageBox("Informasi","No.SEP "+ls_no_surat_jaminan+" Berhasil Diubah.")
+		END IF
+ 		
+		is_mode ='P'
+		cb_simpan.Text = "&Cetak SEP"
+	ELSE
+		Return -1
+	END IF
+/*function soap*/
+/* Fungsi Calling Web Service Create Nomor SJP
+	Parameter:
+		1. noKartu			--> No kartu peserta BPJS
+		2. tglSep			--> Tanggal generate SEP (harus berformat yyyy-MM-dd hh:mm:ss)
+		3. tglRujukan		--> Tanggal rujukan (harus berformat yyyy-MM-dd hh:mm:ss)
+		4. noRujukan		--> Nomor rujukan
+		5. ppkRujukan		--> Kode entity perujuk
+		6. ppkPelayanan	--> Kode entity rumah sakit versi BPJS
+		7. jnsPelayanan	--> 1' untuk rawat inap, '2' untuk rawat jalan
+		8. catatan			--> Catatan tambahan
+		9. diagAwal			--> Diagnosa ICD X dari perujuk (puskesmas / dokter keluarga)
+		10. poliTujuan		--> Poli tujuan di rumah sakit
+		11. klsRawat		--> Kelas rawat tanggungan peserta
+		12. user				--> Username pengguna aplikasi
+		13. noMr				--> No RM pasien
+		
+	Return:
+		1. response				--> no SEP 
+		2. metadata_message	--> pesan error
+		3. metadata_code		--> 200 jika berhasil
+*/
+SetPointer(HourGlass!)
+
+// Temporary
+String ls_hak_kelas, ls_url_bridging, ls_konek_aktif
+
+// Variabel Parameter
+String 	par_jenis_pelayanan_sjp, par_jenis_sjp, par_nomor_kartu_askes, par_nomor_lama_baru
+String	par_pisa, par_nama_peserta, par_tanggal_lahir, par_jenis_kelamin
+String 	par_nomor_mr, par_tanggal_sjp, par_tanggal_rujukan_awal, par_nomor_rujukan
+String	par_kode_ppk_rujukan, par_poli_tujuan, par_kode_diagnose_askes, par_ruang_rawat
+String	par_kelas_rawat, par_catatan_khusus, par_user_id, par_ppk_pel_sjp
+String	ls_stsrrawat,ls_asal_rujukan
+
+String format_tgl_str
+format_tgl_str = 'yyyy-mm-dd'
+
+
+/*Added By A.EMAN, 16718, 2014-09-25*/
+string ls_pesan_bridging, ls_tgl_awal
+String ls_no_telp,ls_bridging
+
+ls_pesan_bridging = ProfileString(gnv_app.of_getappinifile (),"EMR","is_pesan_bridging", "C:\")
+ls_bridging			= ProfileString(gnv_app.of_getappinifile (),"EMR","apibridging", "0") //0. tanpa opr 1. dengan opr
+
+IF ls_pesan_bridging = '1' THEN
+	gnv_msgbox.MessageBox("Perhatian", "Setelah tutup pesan ini, Proses pengecekan data~nuntuk proses create No. SEP akan dilakukan ") //+ string(f_datetime_server()))
+	ls_tgl_awal = string(f_datetime_server())
+END IF
+/*Added By A.EMAN, 16718, 2014-09-25*/
+
+SELECT USER_TRN,
+       	KD_RS_BRIDGING,
+		 URL_BRIDGING,
+		 STS_AKTIF
+  INTO :par_user_id,
+       :par_ppk_pel_sjp,
+		 :ls_url_bridging,
+		 :ls_konek_aktif 
+  FROM TKONEKSI_DB_CRBYR
+ WHERE KD_BAYAR         = :kd_bayar
+   AND KD_JNS_CR_BYR    = :kd_jns_cr_byr
+	AND KD_PAKET_JAMINAN = :kd_paket_jaminan
+	AND STS_KONEKSI      = '1'
+ USING SQLCA;
+
+IF (ls_konek_aktif <> '1') THEN	
+	Return 0
+END IF
+
+Long 		ll_count
+String 	sts_lama_baru, sts_inst
+
+//IF (IsNull(no_surat_jaminan) OR TRIM(no_surat_jaminan) = '' OR Len(no_surat_jaminan) < 13) THEN
+//ELSE
+//	SetPointer(Arrow!)
+//	Return 1
+//END IF
+//
+par_jenis_pelayanan_sjp = jns_pelayanan
+
+// 3. Nomor Kartu Askes [string]
+IF (IsNull(no_kartu)) THEN no_kartu = ''
+par_nomor_kartu_askes = no_kartu
+// 4. Nomor Lama / Baru [string]
+IF (IsNull(sts_lama_baru)) THEN sts_lama_baru = ''
+par_nomor_lama_baru = '1' //sts_lama_baru
+// 5. PISA [P|I|S|A] --> P=Peserta; I=Istri; S=Suami; A=Anak
+IF (IsNull(kd_peserta)) THEN kd_peserta = 'P'
+par_pisa = kd_peserta
+// 6. Nama Peserta [string]
+IF (IsNull(nama_peserta)) THEN nama_peserta = ''
+par_nama_peserta = nama_peserta
+// 7. Tanggal Lahir [dd/mm/yyyy]
+IF (IsNull(tgl_lahir)) THEN // OR Year(Date(tgl_lahir)) <= 1901) THEN ditutup karena memang ada orang yang lahir dibawah tahun 1901
+	par_tanggal_lahir = ''
+ELSE
+	par_tanggal_lahir = String(tgl_lahir, format_tgl_str)
+END IF
+// 8. Jenis Kelamin [string]
+IF (kelamin = '0') THEN
+	par_jenis_kelamin = 'P'
+ELSE
+	par_jenis_kelamin = 'L'
+END IF
+// 9. Nomor MR [string]
+IF (IsNull(norm) OR norm = '') THEN	norm = '0'
+par_nomor_mr = norm
+// 10. Tanggal SJP [dd/mm/yyyy HH:mm:ss]
+IF (IsNull(tgl_crbyr) OR Year(Date(tgl_crbyr)) <= 1901) THEN 
+	par_tanggal_sjp = ''
+ELSE
+	par_tanggal_sjp = String(tgl_crbyr, format_tgl_str)
+END IF
+// 11. Tanggal Rujukan Awal [dd/mm/yyyy HH:mm:ss]
+IF (IsNull(tgl_rujukan) OR Year(Date(tgl_rujukan)) <= 1901) THEN 
+	par_tanggal_rujukan_awal = String(tgl_crbyr, format_tgl_str)
+	
+ELSE
+	par_tanggal_rujukan_awal = String(tgl_rujukan, format_tgl_str)
+END IF
+// 12. Nomor Rujukan [string]
+par_nomor_rujukan = MID('0000000000000000000'+ no_rujukan, LEN('0000000000000000000'+ no_rujukan) - 18)
+
+// 20. PPK Pel SJP [string]
+IF (IsNull(par_ppk_pel_sjp)) THEN par_ppk_pel_sjp = ''
+
+ls_asal_rujukan = ''
+SELECT ISNULL(JNS_FASKES,'1')
+  INTO :ls_asal_rujukan
+  FROM REF_PPK
+ WHERE KODE_PPK = :kode_ppk_rujukan
+ USING SQLCA;
+
+// 13. Kode PPK Rujukan [string]
+IF (IsNull(kode_ppk_rujukan) OR kode_ppk_rujukan = '') THEN 
+	IF (IsNull(kd_ppk_def) OR kd_ppk_def = '') THEN 
+		kode_ppk_rujukan = par_ppk_pel_sjp
+	ELSE
+		kode_ppk_rujukan = kd_ppk_def
+	END IF
+END IF
+par_kode_ppk_rujukan = kode_ppk_rujukan
+
+// 14. Poli Tujuan [string]
+par_poli_tujuan	= kd_poli_bpjs
+
+// 15. Kode Diagnose Askes [string]
+IF (IsNull(kode_diagnose_rujukan)) THEN 
+	kode_diagnose_rujukan = ''
+END IF
+par_kode_diagnose_askes = kode_diagnose_rujukan
+
+SetNull(kode_diagnose_rujukan)
+// Ambil dari mappingannya
+SELECT KD_DIAGNOSA
+  INTO :kode_diagnose_rujukan
+  FROM SHARE_ICD
+ WHERE KD_ICD    = :par_kode_diagnose_askes
+   AND STS_AKTIF = '1'
+ USING SQLCA;
+IF (IsNull(kode_diagnose_rujukan)) THEN 
+ELSE
+	par_kode_diagnose_askes = kode_diagnose_rujukan
+END IF
+
+ls_no_telp = no_telp
+
+IF (IsNull(ls_no_telp) OR ls_no_telp = '' OR len(ls_no_telp) < 8) THEN
+	SetPointer(Arrow!)
+	errmessage = "No. Telp harus di isikan dengan benar (Minimal 8 angka)."
+	gnv_msgbox.MessageBox("Perhatian", errmessage)
+	Return -1
+END IF
+	
+// 16. Ruang Rawat [string] &
+// 17. Kelas Rawat [string]
+//IF (jns_pelayanan <> '1') THEN
+//	par_ruang_rawat = ''
+//	par_kelas_rawat = ''
+//ELSE	
+	SELECT KD_KELAS
+	  INTO :par_kelas_rawat
+	  FROM REF_PESERTA
+	 WHERE NO_PESERTA = :par_nomor_kartu_askes
+	 USING SQLCA;
+//END IF
+
+
+// 19. ID User [string] 
+IF (IsNull(par_user_id)) THEN par_user_id = ''
+
+/*Added By A.EMAN, 16662, 12-09-2014*/
+/*Mengikuti Site RSPI -> Tujuannya agar data registrasi yang sudah ada SEPnya 
+  tapi lom ada data REP_PESERTA bisa ketarik lagi dengan melakukan bridging ulang*/
+// Cek data di REF_PESERTA
+ll_count = 0
+SELECT COUNT(*)
+  INTO :ll_count
+  FROM REF_PESERTA
+ WHERE NO_PESERTA = :par_nomor_kartu_askes
+ USING SQLCA;
+
+IF ll_count = 0 THEN
+	// lakukan cek peserta
+	String 	no_peserta, pisa, kode_ppk, nama_ppk
+	
+	no_peserta = par_nomor_kartu_askes
+	
+	IF f_serv_cek_peserta_vclaim(kd_bayar, kd_jns_cr_byr, kd_paket_jaminan, par_nomor_kartu_askes, pisa, nama_peserta, &
+	                           kelamin, tgl_lahir, kode_ppk, nama_ppk, norm, "peserta" &
+									  ) = -1 THEN
+		Return -1
+	END IF
+END IF
+/**/
+
+IF ISNULL(sts_kejadian_ll) OR sts_kejadian_ll = "" THEN
+	sts_kejadian_ll = '0'
+END IF
+
+IF ISNULL(penjamin_ll) THEN
+	penjamin_ll = ''
+END IF
+
+IF ISNULL(lokasi_ll) THEN
+	lokasi_ll = ''
+END IF
+
+IF ISNULL(sts_cob) OR sts_cob = "" THEN
+	sts_cob = '0'
+END IF
+
+IF ISNULL(catatan) OR catatan = "" THEN
+	catatan = ''
+END IF
+
+IF ISNULL(sts_poli_eksekutif) OR sts_poli_eksekutif = "" THEN
+	sts_poli_eksekutif = '0'
+END IF
+
+String 	kode_prop, kode_kab, kode_kec
+String 	ls_tgl_kejadian_laka, sts_suplesi
+String	ls_tgl1, ls_tgl2, no_surat_kontrol_old
+Integer	li_return, ll_loop
+
+kode_prop 	= ''
+kode_kab 	= '' 
+kode_kec		= ''
+IF ISNULL(lokasi_ll) THEN
+	lokasi_ll = ''
+ELSE
+	IF POS(lokasi_ll, '-') > 0 THEN
+		kode_prop = MID(lokasi_ll, 1, POS(lokasi_ll, '-') - 1)
+		
+		lokasi_ll = MID(lokasi_ll, POS(lokasi_ll, '-') + 1)
+		IF POS(lokasi_ll, '-') > 0 THEN
+			kode_kab = MID(lokasi_ll, 1, POS(lokasi_ll, '-') - 1)
+			
+			lokasi_ll = MID(lokasi_ll, POS(lokasi_ll, '-') + 1)
+			IF POS(lokasi_ll, '-') > 0 THEN
+				kode_kec = MID(lokasi_ll, 1, POS(lokasi_ll, '-') - 1)
+			ELSE
+				kode_kec = lokasi_ll
+			END IF
+		END IF
+	END IF
+END IF
+
+IF ISNULL(sts_poli_eksekutif) OR sts_poli_eksekutif = "" THEN
+	sts_poli_eksekutif = '0'
+END IF
+
+IF ISNULL(sts_katarak) OR sts_katarak = "" THEN
+	sts_katarak = '0'
+END IF
+
+IF ISNULL(tgl_kejadian_laka) OR Year(Date(tgl_kejadian_laka)) < 1901 THEN
+	ls_tgl_kejadian_laka = ''
+ELSE
+	ls_tgl_kejadian_laka = String(tgl_kejadian_laka, format_tgl_str)
+END IF
+
+IF ISNULL(nosepsuplesi) OR nosepsuplesi = '' THEN
+	nosepsuplesi = ''
+	sts_suplesi = '0'
+ELSE
+	sts_suplesi = '1'
+END IF
+IF ISNULL(dokter_dpjp) THEN
+	dokter_dpjp = ''
+END IF
+
+kd_poli_bpjs = par_poli_tujuan
+
+no_surat_kontrol_old = no_surat_kontrol
+IF IsNull(no_surat_kontrol)  OR no_surat_kontrol = '' THEN
+	no_surat_kontrol = ''
+	no_surat_kontrol_old = ''
+ELSE
+//	ls_tgl1			= String(Date(par_tanggal_sjp), 'yyyymm') + '01'
+//	IF String(Date(par_tanggal_sjp), 'dd') <= '25' THEN
+//		ls_tgl2	= String(RelativeDate(Date(par_tanggal_sjp), 31), 'yyyymm') + '01'
+//	ELSE
+//		ls_tgl2	= String(RelativeDate(Date(par_tanggal_sjp), 11), 'yyyymm') + '01'
+//	END IF
+//	
+//	// Cek no_rujukan jika sudah dipakai disebelumnya maka ini kontrol
+//	ll_loop		= 0
+//	li_return 	= 1
+//	DO WHILE li_return > 0 AND ll_loop <= 100 
+//		li_return = 0
+//		SELECT COUNT(*)
+//		  INTO :li_return
+//		  FROM REGISTRASI_MASUK (INDEX TGL_REG_INDX), RUJUKAN_MASUK
+//		 WHERE REGISTRASI_MASUK.KD_INST				= RUJUKAN_MASUK.KD_INST
+//			AND REGISTRASI_MASUK.KD_SUB_INST			= RUJUKAN_MASUK.KD_SUB_INST
+//			AND REGISTRASI_MASUK.KD_DTL_SUB_INST	= RUJUKAN_MASUK.KD_DTL_SUB_INST
+//			AND REGISTRASI_MASUK.NO_PENGUNJUNG		= RUJUKAN_MASUK.NO_PENGUNJUNG
+//			AND REGISTRASI_MASUK.NO_KUNJUNGAN		= RUJUKAN_MASUK.NO_KUNJUNGAN
+//			AND ISNULL(RUJUKAN_MASUK.KD_INST_ASAL, '') = ''
+//			AND REGISTRASI_MASUK.KD_POLI_BPJS		= :kd_poli_bpjs
+//			AND REGISTRASI_MASUK.NO_KONTROL			= :no_surat_kontrol
+//			AND REGISTRASI_MASUK.TGL_REG			  >= :ls_tgl1
+//			AND REGISTRASI_MASUK.TGL_REG				< :ls_tgl2
+//			AND EXISTS (SELECT 1
+//							  FROM SHARE_STATUS, PASIEN
+//							 WHERE SHARE_STATUS.KD_INST				= REGISTRASI_MASUK.KD_INST
+//								AND SHARE_STATUS.KD_SUB_INST			= REGISTRASI_MASUK.KD_SUB_INST
+//								AND SHARE_STATUS.KD_DTL_SUB_INST		= REGISTRASI_MASUK.KD_DTL_SUB_INST
+//								AND SHARE_STATUS.NO_PENGUNJUNG		= REGISTRASI_MASUK.NO_PENGUNJUNG
+//								AND SHARE_STATUS.NO_KUNJUNGAN			= REGISTRASI_MASUK.NO_KUNJUNGAN
+//								AND SHARE_STATUS.KD_INST				= PASIEN.KD_INST
+//								AND SHARE_STATUS.KD_SUB_INST			= PASIEN.KD_SUB_INST
+//								AND SHARE_STATUS.KD_DTL_SUB_INST		= PASIEN.KD_DTL_SUB_INST
+//								AND SHARE_STATUS.NO_PENGUNJUNG		= PASIEN.NO_PENGUNJUNG
+//								AND SHARE_STATUS.NO_KUNJUNGAN			= PASIEN.NO_KUNJUNGAN
+//								AND SHARE_STATUS.STATUS_REGISTRASI	<> '4'
+//						  )
+//		 USING SQLCA;
+//	
+//		IF li_return > 0 THEN 
+//			no_surat_kontrol = String(Long(no_surat_kontrol)+1, '000000')
+//		END IF
+//		
+//		ll_loop++
+//	LOOP
+//	
+//	IF ll_loop >= 100 THEN 
+//		SetPointer(Arrow!)
+//		errmessage = "No.Surat Kontrol tidak ditemukan.."
+//		MessageBox("Perhatian", errmessage)
+//		Return -1
+//	END IF
+END IF
+
+// Variabel Connection Service
+SoapConnection conn // Define SoapConnection
+//bpjs_wsdl my_service // Declare Proxy
+vclaim_wsdlport my_vclaim_service // Declare Proxy
+
+//responsep_result str_result
+//tns__responvclaimupdatesep_result str_result
+tns__responvclaimsep_result str_result
+
+any 		la_myreturn
+Long 		rVal, ll_konfirm
+String 	str_endpoint
+
+IF ls_pesan_bridging = '1' THEN
+	gnv_msgbox.MessageBox("Perhatian", "Setelah tutup pesan ini, Proses insialisasi web service untuk create No. SEP akan dilakukan ") //+ string(f_datetime_server()))
+	ls_tgl_awal = string(f_datetime_server())
+END IF
+
+str_endpoint = ls_url_bridging
+conn = Create SoapConnection 
+rVal = Conn.CreateInstance( my_vclaim_service, "vclaim_wsdlport", str_endpoint)
+IF (rVal <> 0) THEN
+	SetPointer(Arrow!)
+	f_msgbox_koneksi(rVal)
+	errmessage = 'Ada masalah koneksi web service'
+	Return -1
+END IF
+
+IF ls_pesan_bridging = '1' THEN
+	gnv_msgbox.MessageBox("Perhatian", "Proses insialisasi web service untuk create No. SEP telah selesai  " + ls_tgl_awal +'  s.d.  '+ string(f_datetime_server()))
+END IF
+
+
+IF ls_pesan_bridging = '1' THEN
+	gnv_msgbox.MessageBox("Perhatian", "Setelah tutup pesan ini, Proses eksekusi pemanggilan web service untuk create No. SEP akan dilakukan ") //+ string(f_datetime_server()))
+	ls_tgl_awal = string(f_datetime_server())
+END IF
+	
+//IF ls_bridging = '1' THEN
+//	try
+//		la_myreturn = my_vclaim_service.apiVClaimUpdateSEP_opr(&
+//			no_sep,par_kelas_rawat,par_nomor_mr,ls_asal_rujukan,par_tanggal_rujukan_awal,par_nomor_rujukan,par_kode_ppk_rujukan, &
+//			catatan,par_kode_diagnose_askes,sts_poli_eksekutif,sts_cob,sts_kejadian_ll,penjamin_ll,lokasi_ll,ls_no_telp,par_user_id)
+//		
+//		catch (SoapException ee)
+//			SetPointer(Arrow!)
+//			destroy conn
+//			errmessage = "Tidak bisa menggunakan service Generate SEP (Update)!"
+//			gnv_msgbox.MessageBox("Error Koneksi Web Service", errmessage)
+//			Return -1
+//	end try
+//ELSE
+	try
+//		la_myreturn = my_vclaim_service.apiVClaimUpdateSEP(&
+//			no_sep,par_kelas_rawat,par_nomor_mr,ls_asal_rujukan,par_tanggal_rujukan_awal,par_nomor_rujukan,par_kode_ppk_rujukan, &
+//			catatan,par_kode_diagnose_askes,sts_poli_eksekutif,sts_cob,sts_kejadian_ll,penjamin_ll,lokasi_ll,ls_no_telp,par_user_id)
+				 
+		la_myreturn = my_vclaim_service.apiVClaimUpdateSEP11(&
+							no_sep,par_kelas_rawat,par_nomor_mr,ls_asal_rujukan,par_tanggal_rujukan_awal,par_nomor_rujukan,par_kode_ppk_rujukan, &
+							catatan,par_kode_diagnose_askes,sts_poli_eksekutif,sts_cob,sts_kejadian_ll,penjamin_ll,ls_no_telp,par_user_id,sts_katarak, &
+							ls_tgl_kejadian_laka, catatan, sts_suplesi, nosepsuplesi, kode_prop, kode_kab, kode_kec, &
+							no_surat_kontrol, dokter_dpjp)
+			
+		catch (SoapException e)
+			SetPointer(Arrow!)
+			destroy conn
+			errmessage = "Tidak bisa menggunakan service Generate SEP (Update)!"
+			gnv_msgbox.MessageBox("Error Koneksi Web Service", errmessage)
+			Return -1
+	end try
+//END IF
+
+IF ls_pesan_bridging = '1' THEN
+	gnv_msgbox.MessageBox("Perhatian", "Proses eksekusi pemanggilan web service untuk create No. SEP telah selesai  " + ls_tgl_awal +'  s.d.  '+ string(f_datetime_server()))
+END IF
+
+IF (IsNull(la_myreturn)) THEN
+	SetPointer(Arrow!)
+	destroy conn
+	errmessage = "Hasil return service Update SEP tidak bisa dibaca!"
+	gnv_msgbox.MessageBox("Web Service", errmessage)
+	Return -1
+END IF
+
+str_result = la_myreturn
+
+
+IF (str_result.metadata_code <> '200') THEN
+	SetPointer(Arrow!)
+	MessageBox("Web Service (code: " + str_result.metadata_code + ")", "Gagal create SEP: ~n~nMessage: "+ str_result.metadata_message +&
+				  "~n~nData Kiriman:"+&
+				  "~n1. noKartu			=> "+par_nomor_kartu_askes		+&
+				  "~n2. tglSep			=> "+par_tanggal_sjp				+&
+				  "~n3. tglRujukan		=> "+par_tanggal_rujukan_awal	+&
+				  "~n4. noRujukan		=> "+par_nomor_rujukan			+&
+				  "~n5. ppkRujukan		=> "+par_kode_ppk_rujukan		+&
+				  "~n6. ppkPelayanan	=> "+par_ppk_pel_sjp				+&
+				  "~n7. jnsPelayanan	=> "+par_jenis_pelayanan_sjp	+&
+				  "~n8. catatan			=> "+par_catatan_khusus			+&
+				  "~n9. diagAwal			=> "+par_kode_diagnose_askes	+&
+				  "~n10. poliTujuan		=> "+par_poli_tujuan				+&
+				  "~n11. klsRawat		=> "+par_kelas_rawat				+&
+				  "~n12. user				=> "+par_user_id					+&
+				  "~n13. noMr				=> "+par_nomor_mr    +&
+				  "~n13. noTelp				=> "+ls_no_telp +&
+				  "~n14. asalRujukan				=> "+ls_asal_rujukan +&
+				  "~n15. poliEksekutive				=> "+sts_poli_eksekutif+&
+				  "~n16. cob				=> "+sts_cob+&
+				  "~n17. lakaLantas				=> "+sts_kejadian_ll +&
+				  "~n18. penjamin				=> "+penjamin_ll +&
+				  "~n19. katarak				=> "+sts_katarak+& 
+				  "~n20. tgl_kejadian				=> "+ls_tgl_kejadian_laka+&
+				  "~n21. keterangan				=> "+catatan+&
+				  "~n22. suplesi				=> "+sts_suplesi+&
+				  "~n23. nosepsuplesi				=> "+nosepsuplesi+&
+				  "~n24. kode_propinsi				=> "+kode_prop+&
+				  "~n25. kode_kabupaten				=> "+kode_kab+&
+				  "~n26. kode_kecamatan				=> "+kode_kec+&
+				  "~n27. no_surat				=> "+no_surat_kontrol+&
+				  "~n28. kode_dpjp				=> "+dokter_dpjp)
+	
+	errmessage = str_result.metadata_message
+	Return -1
+	
+ELSEIF (IsNull(str_result.response) OR Trim(str_result.response) = '') THEN
+	SetPointer(Arrow!)
+	errmessage = "No.SEP hasil return service tidak ada!"
+	//gnv_msgbox.MessageBox("Web Service", errmessage)
+	
+	MessageBox("Web Service (code: " + str_result.metadata_code + ")", "Gagal create SEP: ~n~nMessage: "+ str_result.metadata_message +&
+				  "~n~nData Kiriman:"+&
+				  "~n1. noKartu			=> "+par_nomor_kartu_askes		+&
+				  "~n2. tglSep			=> "+par_tanggal_sjp				+&
+				  "~n3. tglRujukan		=> "+par_tanggal_rujukan_awal	+&
+				  "~n4. noRujukan		=> "+par_nomor_rujukan			+&
+				  "~n5. ppkRujukan		=> "+par_kode_ppk_rujukan		+&
+				  "~n6. ppkPelayanan	=> "+par_ppk_pel_sjp				+&
+				  "~n7. jnsPelayanan	=> "+par_jenis_pelayanan_sjp	+&
+				  "~n8. catatan			=> "+par_catatan_khusus			+&
+				  "~n9. diagAwal			=> "+par_kode_diagnose_askes	+&
+				  "~n10. poliTujuan		=> "+par_poli_tujuan				+&
+				  "~n11. klsRawat		=> "+par_kelas_rawat				+&
+				  "~n12. user				=> "+par_user_id					+&
+				  "~n13. noMr				=> "+par_nomor_mr    +&
+				  "~n13. noTelp				=> "+ls_no_telp +&
+				  "~n14. asalRujukan				=> "+ls_asal_rujukan +&
+				  "~n15. poliEksekutive				=> "+sts_poli_eksekutif+&
+				  "~n16. cob				=> "+sts_cob+&
+				  "~n17. lakaLantas				=> "+sts_kejadian_ll +&
+				  "~n18. penjamin				=> "+penjamin_ll +&
+				  "~n19. katarak				=> "+sts_katarak+& 
+				  "~n20. tgl_kejadian				=> "+ls_tgl_kejadian_laka+&
+				  "~n21. keterangan				=> "+catatan+&
+				  "~n22. suplesi				=> "+sts_suplesi+&
+				  "~n23. nosepsuplesi				=> "+nosepsuplesi+&
+				  "~n24. kode_propinsi				=> "+kode_prop+&
+				  "~n25. kode_kabupaten				=> "+kode_kab+&
+				  "~n26. kode_kecamatan				=> "+kode_kec+&
+				  "~n27. no_surat				=> "+no_surat_kontrol+&
+				  "~n28. kode_dpjp				=> "+dokter_dpjp)
+	Return -1
+END IF
+
+no_surat_jaminan = str_result.response
+SetPointer(Arrow!)
+
+Return 1
+
+===================
+CREATE PDF
+===================
+/*create pdf**/
+ls_nosep = dw_pasien.GetItemString(ll_row, "no_surat_jaminan")
+				ls_trim_nosep = ProfileString(gnv_app.of_getappinifile ( ),"EMR","saveas_cetak_pdf", "0")
+				
+				IF ls_trim_nosep <> '0' THEN
+					ls_nosep = Right(ls_nosep, long(ls_trim_nosep))
+				END IF
+				
+				IF dw_main.RowCount() > 0 AND Not IsNull(ls_nosep) AND ls_nosep <> '' THEN
+					dw_main.Object.DataWindow.Export.PDF.Method = Distill!
+					dw_main.Object.DataWindow.Printer = 'Printer MWeb'
+					dw_main.Object.DataWindow.Export.PDF.Distill.CustomPostScript = 'Yes'
+					
+					dw_main.SaveAs(ls_pathfolder + '\' + ls_nosep + '.pdf', PDF!, TRUE)
+					
+//					RegistrySet("HKEY_CURRENT_USER\Software\Adobe\AcrobatPDFWriter", "PDFFileName", &
+//					RegistrySet("HKEY_CURRENT_USER\Software\ActivePDF\PrimoPDF\Configuration", "OutputDir", &
+//					            RegString!, ls_pathfolder + '\' + Right(ls_nosep, 3) + '.pdf')
+//					dw_main.Print(FALSE)
+					
+					ll_rec++
+				END IF
+
+-pada visible, fungsi yang sama tidak tampil
+IF(   nama =     nama [-1],0,1) --> pada visible
+cumulativeSum( IF(    nama =      nama [-1],0,1))-- pada compute
+-pada format bisa dihilangkan/ditambahkan salah satu
+[shortdate][time]
+===================================================================
+-fungsi filter : 
+untuk memfilter setelah di retrieve
+===================================================================
+-gaya if
+IF (ls_ceklist_dr = '1') THEN 
+	//ls_kriteria ="ceklist_dr = '1' AND (ceklist_coder = '0' OR ceklist_coder = '') AND (ceklist_verif ='0' OR ceklist_verif = '')"
+	ls_kriteria ="ceklist_dr = '1' AND ceklist_coder = '0' AND ceklist_verif ='0'"
+	//CEKLIST_DR = '1' AND (CEKLIST_CODER ='0' OR CEKLIST_CODER = NULL) AND (CEKLIST_VERIF='0' OR CEKLIST_VERIF = NULL)
+END IF
+===================================================================
+-memilah angka jadi  rupiah pada format diproperties
+ 1) #,##0
+ 2) #,##0.00
+
+===================================================================
+-covert metode
+is_mode = CONVERT(CHAR(1), NULL),
+-
+
+DOKTER_PENGIRIM = CASE WHEN ( RUJUKAN_MASUK.NAMA_PERUJUK is not null ) THEN RUJUKAN_MASUK.NAMA_PERUJUK
+							 ELSE a.NM_DOKTER_RSF END
+===================================================================
+-untuk tidak membaca spasi (trim)
+Trim ( string {, removeallspaces } )
+===================================================================
+-cara bikin jumlah dg query
+SELECT CR_BYR_REGISTRASI.KD_BAYAR,
+         CR_BYR_REGISTRASI.KD_JNS_CR_BYR,
+         TCARABAYAR.CARABAYAR,  
+         TJNS_CR_BAYAR.JNS_CR_BYR, 
+         JML_JNS_BARU_LAKI = SUM(CASE WHEN REGISTRASI_MASUK.KD_JNS_PASIEN = 'B' AND 
+                                           PASIEN.KELAMIN = '1' THEN 1
+                                 ELSE 0 END),
+         JML_JNS_BARU_PERE = SUM(CASE WHEN REGISTRASI_MASUK.KD_JNS_PASIEN = 'B' AND 
+                                           PASIEN.KELAMIN = '0' THEN 1
+                                 ELSE 0 END),
+         JML_JNS_LAMA_LAKI = SUM(CASE WHEN REGISTRASI_MASUK.KD_JNS_PASIEN = 'L' AND 
+                                           PASIEN.KELAMIN = '1' THEN 1
+                                 ELSE 0 END),
+         JML_JNS_LAMA_PERE = SUM(CASE WHEN REGISTRASI_MASUK.KD_JNS_PASIEN = 'L' AND 
+                                           PASIEN.KELAMIN = '0' THEN 1
+                                 ELSE 0 END),
+		   JML_KUNJ_BARU_LAKI = SUM(CASE WHEN REGISTRASI_MASUK.JNS_KUNJUNGAN = 'B' AND 
+                                           PASIEN.KELAMIN = '1' THEN 1
+                                 ELSE 0 END),
+		   JML_KUNJ_BARU_PERE = SUM(CASE WHEN REGISTRASI_MASUK.JNS_KUNJUNGAN = 'B' AND 
+                                           PASIEN.KELAMIN = '0' THEN 1
+                                 ELSE 0 END),
+		   JML_KUNJ_LAMA_LAKI = SUM(CASE WHEN REGISTRASI_MASUK.JNS_KUNJUNGAN = 'U' AND 
+                                           PASIEN.KELAMIN = '1' THEN 1
+                                 ELSE 0 END),
+		   JML_KUNJ_LAMA_PERE = SUM(CASE WHEN REGISTRASI_MASUK.JNS_KUNJUNGAN = 'U' AND 
+                                           PASIEN.KELAMIN = '0' THEN 1
+                                 ELSE 0 END) ,  
+         JML = SUM(1)      
+    FROM REGISTRASI_MASUK,   
+===================================================================
+--	logika data agar data yang pertama yang ada isinya selbinya d set 0
+IF (SELECT COUNT (*)
+			        	FROM  CASEMIX 
+			        	WHERE CASEMIX.KD_INST 			= @KD_INST
+			        	AND   CASEMIX.KD_SUB_INST		= @KD_SUB_INST
+			        	AND   CASEMIX.KD_DTL_SUB_INST	= @KD_DTL_SUB_INST
+			        	AND   CASEMIX.NO_PENGUNJUNG		= @NO_PENGUNJUNG
+			        	AND   CASEMIX.NO_KUNJUNGAN		= @NO_KUNJUNGAN
+			        	)>0
+			        	
+			         SELECT @TARIF_DRG = 0
+			         BEGIN
+						SELECT @TARIF_DRG = CASEMIX.TARIF_DRG
+						FROM CASEMIX
+						WHERE CASEMIX.KD_INST 			= @KD_INST
+			        	AND   CASEMIX.KD_SUB_INST		= @KD_SUB_INST
+			        	AND   CASEMIX.KD_DTL_SUB_INST	= @KD_DTL_SUB_INST
+			        	AND   CASEMIX.NO_PENGUNJUNG		= @NO_PENGUNJUNG
+			        	AND   CASEMIX.NO_KUNJUNGAN		= @NO_KUNJUNGAN       
+			         END
+			         	
+         IF EXISTS	(SELECT 1 
+										 	FROM  #Lap_Operasi
+										 	WHERE #Lap_Operasi.KD_INST 			= @KD_INST
+				    					 	AND   #Lap_Operasi.KD_SUB_INST		= @KD_SUB_INST
+				    					 	AND   #Lap_Operasi.KD_DTL_SUB_INST	= @KD_DTL_SUB_INST
+				    					 	AND   #Lap_Operasi.NO_PENGUNJUNG	= @NO_PENGUNJUNG
+				    					 	AND   #Lap_Operasi.NO_KUNJUNGAN		= @NO_KUNJUNGAN) 
+						  BEGIN
+								SELECT @TARIF_DRG = 0
+						  END
+							/*end added*/  
+===================================================================
+--untuk kasus sp crosstab,hal pertama yang dilakukan adalah
+1.keluarkan scip sp dengan cara : SELECT @vSQL								
+2.kemudian copi scrip di letak query crosstab 
+3. execute dengan sp dan query crostab diremark terlebih dahulu
+4. jika sesuai query yg muncul kemudian silahkan dimodified
+===================================================================
+--cara memindahkan dengan cata dikeyboard dengan enter dari filter ke filter
+event ue_keydown deng EVENT ID pbm_keydown
+IF (Key = KeyEnter!) THEN
+	ddlb_instalasi.SetFocus()
+END IF
+===================================================================
+--jika title  tidak mau di definisikan di dw,tp bisa di window ketika klik ya
+dw_report.object.t_tanggal.text = 'Tanggal : '+string(ldt_tgl_awal, 'dd/mm/yyyy')+' s/d '+string(ldt_tgl_akhir , 'dd/mm/yyyy')
+dw_report.object.header_t.text = 'LAPORAN PEMERIKSAAN '+upper(ll_ket_inst)
+===================================================================
+---cara membuat header dengan mendefinisikan pada scrip (uo,wind)
+contoh
+pada dw nama d propertis : tgl_cetak_t
+script
+dw_report.Object.tgl_cetak_t.Text = 'Tgl. Cetak : ' + String(f_datetime_server(), 'dd/mm/yyyy hh:mm')
+===================================================================
+--fungsi pos: Finds one string within another string.
+Pos ( string1, string2 {, start } )
+contoh: Pos(ddlb_stslunas.Text, '[')
+===================================================================
+--left join
+FROM BARANG LEFT OUTER JOIN USERDAT ON BARANG.USERID = USERDAT.USERID
+===================================================================
+--metode case wen
+
+CASE WHEN TARIF_BARANG_MEDIS.HARGA_DASAR IS NULL
+THEN  TARIF_BARANG_MEDIS.TARIF_BRG  
+ELSE  TARIF_BARANG_MEDIS.HARGA_DASAR - 
+	                                                            (TARIF_BARANG_MEDIS.HARGA_DASAR * TARIF_BARANG_MEDIS.DISCOUNT_PERSEN * 0.01) +
+	                                                            ((TARIF_BARANG_MEDIS.HARGA_DASAR - 
+	                                                              (TARIF_BARANG_MEDIS.HARGA_DASAR * TARIF_BARANG_MEDIS.DISCOUNT_PERSEN * 0.01)
+	                                                             ) * TARIF_BARANG_MEDIS.PPN * 0.01
+	                                                            )
+  END 
+===================================================================
+--cara replace hurup di sql
+            SELECT @HARUS_BAYAR_TEXT = convert(VARCHAR(30), CAST(@xHARUS_BAYAR AS MONEY),1)
+            SELECT @HARUS_BAYAR_TEXT = str_replace(@HARUS_BAYAR_TEXT,'.','#')
+            SELECT @HARUS_BAYAR_TEXT = str_replace(@HARUS_BAYAR_TEXT,',','.')
+            SELECT @HARUS_BAYAR_TEXT = str_replace(@HARUS_BAYAR_TEXT,'#',',')
+===================================================================
+--penggunan case
+if rb_bulan.checked = True Then
+	CHOOSE CASE lower(ddlb_bln.text)
+	CASE 'januari'
+		ls_bulan = '1'
+	CASE 'februari'
+		ls_bulan = '2'
+	CASE 'maret'
+		ls_bulan = '3'
+	CASE 'april'
+		ls_bulan = '4'
+	CASE 'mei'
+		ls_bulan = '5'
+	CASE 'juni'
+		ls_bulan = '6'
+	CASE 'juli'
+		ls_bulan = '7'
+	CASE 'agustus'	
+		ls_bulan = '8'
+	CASE 'september'
+		ls_bulan = '9'
+	CASE 'oktober'
+		ls_bulan = '10'
+	CASE 'november'
+		ls_bulan = '11'
+	CASE 'desember'
+		ls_bulan = '12'	 
+	END CHOOSE
+=================================================
+--modifay coloum
+SELECT KD_TRANSAKSI_MINTA,
+       NO_TRANSAKSI_MINTA,
+       KD_WAKTU_MAKAN,
+       KD_KELOMPOK_KELAS,
+       JNS_MKN_BHN,
+       KD_GOL_MKN_BHN,
+       KD_MKN_BHN,
+       KD_PABRIK_BHN,
+       JML_BHN,
+       JML_ORDER,
+       JNS_MKN_MINTA,
+       KD_GOL_MKN_MINTA,
+       KD_MKN_MINTA,
+       KD_PABRIK_MINTA,
+       STS_DPM
+  INTO #GZ_LINK_MINTA_BHN_PAS_KLP_KLS
+  FROM GZ_LINK_MINTA_BHN_PAS_KLP_KLS
+GO
+
+DROP TABLE GZ_LINK_MINTA_BHN_PAS_KLP_KLS
+GO
+
+CREATE TABLE dbo.GZ_LINK_MINTA_BHN_PAS_KLP_KLS
+	(
+	KD_TRANSAKSI_MINTA CHAR (2) NOT NULL,
+	NO_TRANSAKSI_MINTA CHAR (12) NOT NULL,
+	KD_WAKTU_MAKAN     CHAR (1) NOT NULL,
+	KD_KELOMPOK_KELAS  CHAR (2) NOT NULL,
+	JNS_MKN_BHN        CHAR (1) NOT NULL,
+	KD_GOL_MKN_BHN     CHAR (2) NOT NULL,
+	KD_MKN_BHN         CHAR (3) NOT NULL,
+	KD_PABRIK_BHN      CHAR (3) NOT NULL,
+	NO_URUT            INT DEFAULT 1 NOT NULL,
+	JML_BHN            DECIMAL (12,2) NOT NULL,
+	JML_ORDER          DECIMAL (12,2) NOT NULL,
+	JNS_MKN_MINTA      CHAR (1) NOT NULL,
+	KD_GOL_MKN_MINTA   CHAR (2) NOT NULL,
+	KD_MKN_MINTA       CHAR (3) NOT NULL,
+	KD_PABRIK_MINTA    CHAR (3) NOT NULL,
+	STS_DPM            CHAR (1) NOT NULL,
+	KD_BENTUK_MAKANAN_DIET CHAR (2) NULL,
+	CONSTRAINT PK_GZ_LINK_MINTA_BHN_PAS_KLP PRIMARY KEY (KD_TRANSAKSI_MINTA,NO_TRANSAKSI_MINTA,KD_WAKTU_MAKAN,KD_KELOMPOK_KELAS,JNS_MKN_BHN,KD_GOL_MKN_BHN,KD_MKN_BHN,KD_PABRIK_BHN,NO_URUT)
+	)
+GO
+
+INSERT
+  INTO GZ_LINK_MINTA_BHN_PAS_KLP_KLS
+       ( KD_TRANSAKSI_MINTA,
+         NO_TRANSAKSI_MINTA,
+         KD_WAKTU_MAKAN,
+         KD_KELOMPOK_KELAS,
+         JNS_MKN_BHN,
+         KD_GOL_MKN_BHN,
+         KD_MKN_BHN,
+         KD_PABRIK_BHN,
+         NO_URUT,
+         JML_BHN,
+         JML_ORDER,
+         JNS_MKN_MINTA,
+         KD_GOL_MKN_MINTA,
+         KD_MKN_MINTA,
+         KD_PABRIK_MINTA,
+         STS_DPM )
+SELECT KD_TRANSAKSI_MINTA,
+       NO_TRANSAKSI_MINTA,
+       KD_WAKTU_MAKAN,
+       KD_KELOMPOK_KELAS,
+       JNS_MKN_BHN,
+       KD_GOL_MKN_BHN,
+       KD_MKN_BHN,
+       KD_PABRIK_BHN,
+       1,
+       JML_BHN,
+       JML_ORDER,
+       JNS_MKN_MINTA,
+       KD_GOL_MKN_MINTA,
+       KD_MKN_MINTA,
+       KD_PABRIK_MINTA,
+       STS_DPM
+  FROM #GZ_LINK_MINTA_BHN_PAS_KLP_KLS
+GO
+
+DROP TABLE #GZ_LINK_MINTA_BHN_PAS_KLP_KLS
+GO
+=========================================================
+modified table temporary untuk select dan insert
+=========================================================
+SELECT kd_modul,
+	   no_index ,
+	   kd_grp 	= 'GIZ_0204',
+ 	   enabled	= 'T',
+ 	   visibled	= 'T'
+ INTO #security_groups
+  FROM security_menu
+ WHERE no_index LIKE '0950%%'
+
+INSERT INTO security_groups (kd_modul, no_index, kd_grp, enabled, visibled)
+SELECT kd_modul,
+	   no_index ,
+	   kd_grp,
+ 	   enabled,
+ 	   visibled	
+  FROM #security_groups
+  DROP TABLE #security_groups
+=========================================================
+--fungsi return
+=========================================================
+untuk return -1 ---> -1 artinya dia mngulang ke atas
+	---> 1 artinya dia mngelanjutkan
+untuk open witparm
+
+=========================================================
+pengambilan hari dijadikan bulan
+=========================================================
+ldt_tgl_sekarang = f_datetime_server()
+					
+ls_day = String(DAY(Date(ldt_tgl_sekarang)))
+										
+					CHOOSE CASE MONTH(DAte(ldt_tgl_sekarang))
+						CASE  1  
+							ls_bulan = 'Januari'
+						CASE  2  
+							ls_bulan = 'Februari'
+						CASE  3  
+							ls_bulan = 'Maret'
+						CASE  4  
+							ls_bulan = 'April'
+						CASE  5  
+							ls_bulan = 'Mei'
+						CASE  6  
+							ls_bulan = 'Juni'
+						CASE  7  
+							ls_bulan = 'Juli'
+						CASE  8  
+							ls_bulan = 'Agustus'
+						CASE  9  
+							ls_bulan = 'September'
+						CASE 10  
+							ls_bulan = 'Oktober'
+						CASE 11  
+							ls_bulan = 'November'
+						CASE 12  
+							ls_bulan = 'Desember'
+					END CHOOSE
+								
+					ls_tahun = String(Year(Date(ldt_tgl_sekarang)))
+				END IF
+=========================================================
+contoh pengambilan tahun dengan case
+=========================================================
+SELECT KODE = CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 1 THEN 'A'
+                              ELSE
+                                  CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 3 THEN 'B'
+                                  ELSE
+                                      CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 5 THEN 'C'
+                                      ELSE
+                                          CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 12 THEN 'D'
+                                          ELSE
+                                              CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 25 THEN 'E'
+                                              ELSE
+                                                  CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 45 THEN 'F'
+                                                  ELSE
+                                                      'G'
+                                                  END
+                                              END
+                                          END
+                                      END
+                                  END
+                              END,
+       JANUARI = IsNull(SUM(CASE WHEN DATEPART(MONTH,PASIEN.TGL_REG) = 1 THEN 1 ELSE 0 END), 0),
+       FEBRUARI = IsNull(SUM(CASE WHEN DATEPART(MONTH,PASIEN.TGL_REG) = 2 THEN 1 ELSE 0 END), 0),
+       MARET = IsNull(SUM(CASE WHEN DATEPART(MONTH,PASIEN.TGL_REG) = 3 THEN 1 ELSE 0 END), 0),
+       APRIL = IsNull(SUM(CASE WHEN DATEPART(MONTH,PASIEN.TGL_REG) = 4 THEN 1 ELSE 0 END), 0),
+       MEI = IsNull(SUM(CASE WHEN DATEPART(MONTH,PASIEN.TGL_REG) = 5 THEN 1 ELSE 0 END), 0),
+       JUNI = IsNull(SUM(CASE WHEN DATEPART(MONTH,PASIEN.TGL_REG) = 6 THEN 1 ELSE 0 END), 0),
+       JULI = IsNull(SUM(CASE WHEN DATEPART(MONTH,PASIEN.TGL_REG) = 7 THEN 1 ELSE 0 END), 0),
+       AGUSTUS = IsNull(SUM(CASE WHEN DATEPART(MONTH,PASIEN.TGL_REG) = 8 THEN 1 ELSE 0 END), 0),
+       SEPTEMBER = IsNull(SUM(CASE WHEN DATEPART(MONTH,PASIEN.TGL_REG) = 9 THEN 1 ELSE 0 END), 0),
+       OKTOBER = IsNull(SUM(CASE WHEN DATEPART(MONTH,PASIEN.TGL_REG) = 10 THEN 1 ELSE 0 END), 0),
+       NOVEMBER = IsNull(SUM(CASE WHEN DATEPART(MONTH,PASIEN.TGL_REG) = 11 THEN 1 ELSE 0 END), 0),
+       DESEMBER = IsNull(SUM(CASE WHEN DATEPART(MONTH,PASIEN.TGL_REG) = 12 THEN 1 ELSE 0 END), 0),
+       UMUR = CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 1 THEN '0 - 1 Tahun'
+                              ELSE
+                                  CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 3 THEN '1 - 3 Tahun'
+                                  ELSE
+                                      CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 5 THEN '3 - 5 Tahun'
+                                      ELSE
+                                          CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 12 THEN '5 - 12 Tahun'
+                                          ELSE
+                                              CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 25 THEN '12 - 25 Tahun'
+                                              ELSE
+                                                  CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 45 THEN '25 - 45 Tahun'
+                                                  ELSE
+                                                      '> 45 Tahun'
+                                                  END
+                                              END
+                                          END
+                                      END
+                                  END
+                              END
+  FROM PASIEN (INDEX IDX_KD_INST_TGL_REG),
+       INSTALASI,
+       SHARE_STATUS,
+       CR_BYR_REGISTRASI
+ WHERE INSTALASI.KD_INST = PASIEN.KD_INST
+   AND SHARE_STATUS.KD_INST = PASIEN.KD_INST
+   AND SHARE_STATUS.KD_SUB_INST = PASIEN.KD_SUB_INST
+   AND SHARE_STATUS.KD_DTL_SUB_INST = PASIEN.KD_DTL_SUB_INST
+   AND SHARE_STATUS.NO_PENGUNJUNG = PASIEN.NO_PENGUNJUNG
+   AND SHARE_STATUS.NO_KUNJUNGAN = PASIEN.NO_KUNJUNGAN
+   AND SHARE_STATUS.STATUS_REGISTRASI <> '4'
+   AND CR_BYR_REGISTRASI.KD_INST = PASIEN.KD_INST
+   AND CR_BYR_REGISTRASI.KD_SUB_INST = PASIEN.KD_SUB_INST
+   AND CR_BYR_REGISTRASI.KD_DTL_SUB_INST = PASIEN.KD_DTL_SUB_INST
+   AND CR_BYR_REGISTRASI.NO_PENGUNJUNG = PASIEN.NO_PENGUNJUNG
+   AND CR_BYR_REGISTRASI.NO_KUNJUNGAN = PASIEN.NO_KUNJUNGAN
+   AND CR_BYR_REGISTRASI.STATUS_UTAMA = '1'
+   AND CR_BYR_REGISTRASI.STATUS_AKHIR = '1'
+   AND PASIEN.TGL_REG >= '2016-01-01'
+   AND PASIEN.TGL_REG < '2017-01-01'
+   AND PASIEN.KD_INST = '01'
+   AND EXISTS (SELECT 1
+                 FROM REGISTRASI_MASUK
+                WHERE REGISTRASI_MASUK.KD_INST = PASIEN.KD_INST
+                  AND REGISTRASI_MASUK.KD_SUB_INST = PASIEN.KD_SUB_INST
+                  AND REGISTRASI_MASUK.KD_DTL_SUB_INST = PASIEN.KD_DTL_SUB_INST
+                  AND REGISTRASI_MASUK.NO_PENGUNJUNG = PASIEN.NO_PENGUNJUNG
+                  AND REGISTRASI_MASUK.NO_KUNJUNGAN = PASIEN.NO_KUNJUNGAN
+              )
+ GROUP BY CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 1 THEN 'A'
+              ELSE
+                  CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 3 THEN 'B'
+                  ELSE
+                      CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 5 THEN 'C'
+                      ELSE
+                          CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 12 THEN 'D'
+                          ELSE
+                              CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 25 THEN 'E'
+                              ELSE
+                                  CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 45 THEN 'F'
+                                  ELSE
+                                      'G'
+                                  END
+                              END
+                          END
+                      END
+                  END
+              END,
+              CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 1 THEN '0 - 1 Tahun'
+              ELSE
+                  CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 3 THEN '1 - 3 Tahun'
+                  ELSE
+                      CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 5 THEN '3 - 5 Tahun'
+                      ELSE
+                          CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 12 THEN '5 - 12 Tahun'
+                          ELSE
+                              CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 25 THEN '12 - 25 Tahun'
+                              ELSE
+                                  CASE WHEN DATEDIFF(YEAR, PASIEN.TGL_LAHIR, PASIEN.TGL_REG) <= 45 THEN '25 - 45 Tahun'
+                                  ELSE
+                                      '> 45 Tahun'
+                                  END
+                              END
+                          END
+                      END
+                  END
+              END 
+
+
+=========================================================
+/*contoh pengambilan dan pemotongan data pada query*/
+=========================================================
+IF OBJECT_ID ('dbo.fc_CvNumToString') IS NOT NULL
+	DROP FUNCTION dbo.fc_CvNumToString
+GO
+
+CREATE function fc_CvNumToString  
+  (@DATA     NUMERIC(20,8),  
+   @FORMAT   INT,
+   @FLAG	 CHAR(1)
+   )  
+  returns varchar (20)  
+  -- select dbo.fc_CvNumToString (188.000, 1, '0')
+as  
+  
+begin  
+  DECLARE	@pos_titik 		INT,
+  			@pos_nol		INT,
+  			@str			VARCHAR(20),
+  			@str_koma		VARCHAR(8),
+  			@str_dpn_koma	VARCHAR(12),
+  			@pembulatan		CHAR(1),
+  			@pembulatan1	CHAR(1),
+  			@STRING_VALUE 	VARCHAR(20)
+  			
+  			
+  SELECT @DATA = ROUND(@DATA,@FORMAT)
+
+  SET @str = CONVERT(VARCHAR,@DATA)
+
+  SET @pos_titik = CHARINDEX('.',@str)
+  
+  SET @str_dpn_koma = LEFT(@str,@pos_titik)
+  
+  SET @str_koma = SUBSTRING(@str,@pos_titik + 1, @FORMAT)	
+
+  SET @STRING_VALUE = @str_dpn_koma +  @str_koma
+  
+  IF(@FLAG = '1' )
+  BEGIN
+  	SELECT @STRING_VALUE = @STRING_VALUE + '00000000'
+  	
+  	SELECT @STRING_VALUE = LEFT(@STRING_VALUE, LEN(@str_dpn_koma) + @FORMAT)
+  END
+  ELSE
+  BEGIN
+  	SET 	@pos_nol = CHARINDEX('0', @str_koma)
+  	SET		@pos_nol = LEN( @str_dpn_koma) + @pos_nol
+  	SELECT	@STRING_VALUE = LEFT(@STRING_VALUE, @pos_nol - 1)
+  END
+  	
+  
+  IF RIGHT(@STRING_VALUE, 1) = "."
+  BEGIN
+  	SELECT @STRING_VALUE = LEFT(@STRING_VALUE, LEN(@STRING_VALUE) -1)
+  END  
+
+  return @STRING_VALUE 
+
+end 
+
+
+
+GO
+Keterangan:
+CHARINDtgl 15 22171EX() seperti POS
+
+======
+metode menghitung otoatis tanggal
+=====
+	ll_wktprogram = this.getitemnumber( row,"waktu_program")
+	ldt_tgl_akhir =  this.getitemdatetime( row,"tgl_awal_pnddkn")
+	ll_jmlh_tgl = long(ll_wktprogram) +long( string(datetime(data),'yyyy'))
+	ldt_tgl_akhir_set=Date(string (ldt_tgl_akhir,'dd/mm')+'/'+string(ll_jmlh_tgl))
+	this.setitem(row,"tgl_akhir_pnddkn",ldt_tgl_akhir_set)
+
+
+==============================================
+LOOPING SET DEFULT METHODE
+==============================================
+long li_row,li_max
+string ls_default,ls_sts_aktif
+
+IF dwo.name="as_default" THEN
+	If data = '1' Then 
+		li_row = 1
+		li_max = This.rowcount( )
+		Do While (li_max >= li_row)
+			If (li_row <> row) Then
+				This.SetItem(li_row,"as_default", "0")
+			End If
+			li_row++
+		Loop
+	else
+		This.SetItem(1,"as_default", "1")
+	End If
+	
+	This.AcceptText()
+End If
+===========================
+ngambil row pada scroll bar
+===========================
+di pfc scrollvertical
+string ls_row
+ls_row = this.object.datawindow.FirstRowOnPage
+messagebox("",ls_row)
+========================================
+string execute dan metode looping string pda sp
+======================================
+WHILE(@@SQLSTATUS = 0)
+         
+	     BEGIN
+	     
+	     SELECT  @ll_row = 0
+			  WHILE @ll_row < 24
+			  BEGIN
+			  
+			     SELECT @kd_brks = CONVERT(CHAR(2),@ll_row + 1)
+			    
+			     IF EXISTS(SELECT 1
+			                 FROM LENGKAP_BERKAS_RM_MUTASI
+			                WHERE NORM  =@norm)
+			     BEGIN
+				     IF  (SELECT count(*) 
+				                       	 FROM LENGKAP_BERKAS_RM_MUTASI
+				                        WHERE KD_LENGKAP	 =	RIGHT ('0' + @kd_brks ,2)
+				                       	  AND KD_DOKTER_RSF  = @kd_dokter_rsf
+				                       	  AND NORM = @norm
+				                       	 ) > 0
+					 	BEGIN 
+					 	 --	SELECT '1',@norm, @kd_dokter_rsf,@kd_brks
+					 		SELECT @lengkap_1 = 1 
+					 		SELECT @lengkap_0 = 0
+					 	END 
+					 ELSE
+					  	BEGIN
+					  	 --	SELECT '2',@norm, @kd_dokter_rsf,@kd_brks
+					  		SELECT @lengkap_0 = 1
+					  		SELECT @lengkap_1 = 0  
+					  	END
+						 
+				 END 
+			  
+			   	IF NOT EXISTS(SELECT 1
+			                   FROM #TMP_BERKAS
+			                  WHERE KD_DOKTER  = @kd_dokter_rsf)
+				     BEGIN
+				     	SELECT @str = "INSERT INTO #TMP_BERKAS (KD_DOKTER,	KOLOM_"+ @kd_brks +"L, KOLOM_" + @kd_brks + "TL) VALUES (" + 
+				     						"'" + @kd_dokter_rsf+ "'," + CONVERT(VARCHAR(4),@lengkap_1) + "," + CONVERT(VARCHAR(4),@lengkap_0)+ ")"
+				     	EXECUTE (@str)
+				     END
+				      
+			     ELSE
+				     BEGIN
+						
+						IF @lengkap_1 = 1 AND  @lengkap_0 = 0
+						BEGIN
+					     	SELECT @str = "UPDATE #TMP_BERKAS SET KOLOM_"+@kd_brks+"L = (KOLOM_"+@kd_brks+"L + 1), KOLOM_"+@kd_brks+"TL =  KOLOM_"+@kd_brks+"TL " +
+					     				   " WHERE KD_DOKTER = '"+@kd_dokter_rsf+ "'"
+					    --  SELECT 'A', @str	   
+				     		EXECUTE (@str)
+				     	END
+				     	ELSE
+				     	BEGIN
+				     		SELECT @str = "UPDATE #TMP_BERKAS SET KOLOM_"+@kd_brks+"L = KOLOM_"+@kd_brks + "L, KOLOM_"+@kd_brks+"TL = (KOLOM_"+@kd_brks+"TL + 1)" +
+					     				   " WHERE KD_DOKTER = '"+@kd_dokter_rsf+ "'"
+					      --	SELECT 'B',@str	   
+				     		EXECUTE (@str)
+				     	END
+				     END
+		 SELECT @ll_row = @ll_row + 1 	      
+		 END 
+	     FETCH CUR_TRANS
+	      INTO @norm,
+		       @kd_dokter_rsf		       
+		  	  
+		   
+    END
+==========================================================================================================
+membndingkan tanggal
+IF DaysAfter(date(ldt_tglawal), date(ldt_tglakhir)) > 31 THEN
+===============
+filter script
+===============
+ls_kode	= LEFT(ddlb_jenis.text,2)
+ddlb_tipe.Reset()
+DECLARE CUR_TIPE CURSOR FOR
+SELECT KODE,
+		 NAMA
+ FROM TMASTER_TIPE_AKREDITASI
+WHERE STS_AKTIF	= '1'
+  AND KODE_JNS		= :ls_kode;
+OPEN  CUR_TIPE;
+FETCH CUR_TIPE INTO :ls_kode, :ls_nama;
+DO WHILE (SQLCA.SQLCode = 0)
+	ddlb_tipe.AddItem(ls_kode+'. '+ls_nama)
+	
+	FETCH CUR_TIPE INTO :ls_kode, :ls_nama;
+LOOP
+CLOSE CUR_TIPE;
+
+ddlb_tipe.SelectItem(1)
+
+
+=====================
+alternatif enter
+=====================
+CHAR (13) bisa jadi alternatif enter
+=====================
+kerangka SP
+=====================
+IF OBJECT_ID ('dbo.sp_trans_akreditasi') IS NOT NULL
+	DROP PROCEDURE dbo.sp_trans_akreditasi
+GO
+
+CREATE PROCEDURE dbo.sp_trans_akreditasi
+/*******************************************************/
+/* Object-ID     : sp_trans_akreditasi                 */
+/* Module        : Pelayanan                           */
+/* Revise Number : 00       						   */
+/* Created By    : DANI                               */
+/* Created At    : 18/12/2014                          */
+/* Description   : Membuat Transaksi Akreditasi 	   */
+/* Ass           : -                             	   */
+/*******************************************************/
+
+@P_TGL_AWAL    DATETIME,
+@P_TGL_AKHIR   DATETIME,
+@P_KODE_GUDANG CHAR(3)
+
+AS
+BEGIN
+    SET TRANSACTION ISOLATION LEVEL 0
+	
+    DECLARE 
+    
+    CREATE TABLE #TMP_1 
+                 (
+                  
+	              )
+	            
+	DECLARE CUR_TRANS CURSOR FOR
+		(
+			Query_utama
+		)
+        
+	OPEN CUR_TRANS
+		 FETCH CUR_TRANS
+		  INTO @KD_JNS_TRANSAKSI,
+		       @NO_TRANSAKSI,
+		       @NO_RESEP
+         WHILE(@@SQLSTATUS = 0)
+	     BEGIN
+	     
+	         
+	     FETCH CUR_TRANS
+	      INTO @KD_JNS_TRANSAKSI,
+	           @NO_TRANSAKSI,
+			   @NO_RESEP
+    	 END
+    CLOSE CUR_TRANS
+	DEALLOCATE CURSOR CUR_TRANS
+	
+	SELECT #TMP_1.JENIS_BAYAR,
+	       #TMP_1.NM_JENIS_BAYAR,
+	       #TMP_1.KD_ASAL_RESEP,
+           #TMP_1.NAMA_POLI,
+           #TMP_1.LEMBAR_R,
+           --#TMP_1.NO_RESEP,
+           UANG_R = #TMP_1.TOTAL_TUSLAG,
+           #TMP_1.TOTAL_TGH,
+           #TMP_1.HANDLING
+         FROM #TMP_1
+     ORDER BY #TMP_1.JENIS_BAYAR,
+              #TMP_1.NAMA_POLI
+END
+
+
+GO
+=============================
+execute pada sp
+=============================
+SQLCA.autocommit = true /* add by aan, 28 nov 2011*/
+DECLARE Insert_casemix PROCEDURE FOR sp_Batch_ICD_9_CM_NOREG
+	@KD_INST         = :ivs_i,
+	@KD_SUB_INST     = :ivs_si,
+	@KD_DTL_SUB_INST = :ivs_dsi,
+	@NO_PENGUNJUNG   = :ivs_p,
+	@NO_KUNJUNGAN    = :ivs_k
+USING SQLCA;
+EXECUTE Insert_casemix;
+IF (SQLCA.SQLCode > -1) THEN
+	CLOSE Insert_casemix;
+	Commit Using SQLCA;
+ELSE
+	ll_code     = SQLCA.SQLDBCode
+	gvs_dberror = SQLCA.SQLErrText
+	CLOSE Insert_casemix;
+	RollBack Using SQLCA;
+	gnv_MsgBox.MessageBox("Error insert_casemix No. : "+String(ll_code), gvs_dberror,StopSign!)
+	Return -1
+END IF
+SQLCA.autocommit = FALSE /* add by aan, 28 nov 2011*/
+
+=======================
+cara memasukan gambar
+=======================
+//INT value
+//string ls_path, ls_filename,ls_data
+//IF (dwo.name = "b_kamus" )THEN
+//	value = GetFileOpenName("Pilih File", ls_path, ls_filename,  "DOC", &
+//   + "Graphic Files (*.jpg),*.png;*.jpg;*.jpeg," &
+//   + "PNG Files (*.PNG),*.png,")
+//	ls_data = TRIM(ls_path)
+//	this.setitem( row,"kamus", ls_data)
+//	
+//END IF
+//
+IF (dwo.name = "b_kamus" )THEN
+/* script for upload picture */
+
+long ll_filelength
+integer i, li_cnt, li_rtn, li_filenum
+string ls_dir, ls_docpath, ls_docname[]
+string ls_lot_no
+ls_dir = GetCurrentDirectory( )
+        
+ li_rtn = GetFileOpenName("Upload File",&
+ is_path, ls_docname[], "Graphic Files", &
+ + "JPG Files (*.jpg),*.jpg," &
+ + "BMP Files (*.bmp),*.bmp," &
+ + "JPEG Files (*.jpeg),*.jpeg," &
+ + "GIF Files (*.gif), *.gif", &
+ ls_dir, 18)
+        
+ IF li_rtn < 1 THEN return
+    
+ li_cnt = Upperbound(ls_docname)
+    
+  if li_cnt = 1 then
+        ll_filelength = FileLength(is_path)
+        
+     if ceiling(ll_filelength / 1000 ) > 400 then
+            messagebox("Peringatan", "File upload terlalu besar ~rSilakan upload file picture dengan ukuran maksimal 200 Kb",stopsign!)
+            return
+        end if
+	  if ceiling(ll_filelength / 1000 ) > 400 then
+            messagebox("Peringatan", "File upload terlalu besar ~rSilakan upload file picture dengan ukuran maksimal 200 Kb",stopsign!)
+            return
+        end if
+        
+ //    p_1.picturename = is_path
+//        sle_browse.text = ls_docname[1]
+        is_filename		= ls_docname[1]
+        
+   end if
+  /* script fot upload blob */
+
+//GETTING THE FILE INTO THE PICTURE CONTROL
+long flen, bytes_read, new_pos, ll_len
+blob lblob_b, lblob_tot_b
+integer  loops
+string ls_kode,ls_kode_jenis
+ // Set a wait cursor
+ SetPointer(HourGlass!)
+
+ // GET THE FILE LENGHT SO WE CAN CALCULATE THE READ LOOP
+ flen = FileLength(is_filename)
+
+ //CHECKING IF THE IMAGE FILE IS OK
+ IF flen < 100 THEN
+// RETURN -1
+ END IF
+
+ //OPENING THE IMAGE FILE
+ li_FileNum = FileOpen(is_filename, StreamMode!, Read!, LockRead!)
+
+ // Determine how many times to call FileRead
+ IF flen > 32765 THEN
+      IF MOD(flen, 32765) = 0 THEN
+            loops = flen/32765
+      ELSE
+            loops = (flen/32765) + 1
+      END IF
+ ELSE
+      loops = 1
+ END IF
+// messagebox('',string(lblob_b))
+  // READ THE FILE INTO THE BLOB VARIABLE
+ new_pos = 1
+ FOR i = 1 to loops
+      bytes_read = FileRead(li_FileNum, lblob_b)
+      lblob_tot_b = lblob_tot_b + lblob_b
+ NEXT
+//messagebox('',string(lblob_tot_b))
+ //PASSING THE CONTENT OF THE FILE INTO A INSTANCE BLOB VARIABLE
+// iblob_picture = lblob_tot_b
+
+ //CLOSING THE IMAGE FILE
+ FileClose(li_FileNum)
+
+ls_kode 			= this.getitemstring(row, 'kode')
+ls_kode_jenis 	= this.getitemstring(row, 'kode_jns')
+
+updateblob TMASTER_TIPE_AKREDITASI 
+          set GAMBAR_KAMUS = :lblob_tot_b
+     where TMASTER_TIPE_AKREDITASI.KODE 			= :ls_kode
+	  AND  TMASTER_TIPE_AKREDITASI.KODE_JNS	=:ls_kode_jenis;
+commit using sqlca;
+
+this.setitem( row,"kamus", ls_docname)
+END IF
+=================
+cara select gambar
+=====================
+
+SELECTBLOB GAMBAR_KAMUS
+INTO 	:bImage
+  FROM TMASTER_TIPE_AKREDITASI
+  WHERE KODE		  =:ls_kd_tipe
+     AND KODE_JNS =:ls_kd_jenis
+	 USING SQLCA;
+
+p_gambar.setpicture(bImage)
+
+==================================
+cek duplikasi
+=================================
+this.accepttext( )
+ll_row = 1
+ll_max = this.rowcount( )
+Do While(ll_row <= ll_max)
+ll_max = this.RowCount()
+ll_row2 = 1
+DO WHILE (ll_max >= ll_row2)
+	IF (ll_row <> ll_row2) THEN
+			IF (this.getitemstring(ll_row, "nip")) =(this.getitemstring(ll_row2, "nip")) THEN
+				gnv_msgbox.MessageBox("Peringatan", "Duplikasi NIM pada baris-"+String(ll_row)+"~r dengan NIM pada baris-"+String(ll_row2), Exclamation!)
+				this.SetFocus()
+				this.ScrollToRow(ll_row2)
+				this.SetColumn("nip")
+				Return -1
+			END IF
+		END IF
+		ll_row2++
+	LOOP
+	ll_row++
+LOOP	
+===========================
+====================
+pengambilan bulan pada tanggal
+====================
+SELECT bulan = RIGHT('0'+ RTRIM(LTRIM(CONVERT(CHAR(2),DATEPART(mm,'2017/01/01 14:02:20')))),2)
+
+
+===========================
+fungsi replace = str_replace(yang mau direplace,'kalimat yang direplace','replace dengan apa')
+======================
+str_replace(RIGHT(DIKLIT_PENELITIAN.LOKASI_PENELITIAN,LEN(DIKLIT_PENELITIAN.LOKASI_PENELITIAN) - 2),'-',CHAR(13)),
+======================
+cara mengabil setup printer
+
+SetNull(ls_printer_old)
+ls_printer_old = PrintGetPrinter()
+
+ll_place = pos (ls_printer_old, "~t")
+IF (ll_place > 0) THEN
+	ls_printer_old=left(ls_printer_old, ll_place -1)
+END IF
+
+set ke printernya
+
+PrintSetPrinter (ls_printer)
+=========================================
+Panggil SP
+=========================================
+DECLARE sp_insert_sms_broadcast PROCEDURE FOR  sp_insert_sms_broadcast
+USING sqlca_mirsa;
+EXECUTE sp_insert_sms_broadcast ;
+
+
+IF sqlca_mirsa.SQLCode < 0 THEN
+	gs_error = sqlca_mirsa.SQLErrText
+	CLOSE sp_insert_sms_broadcast;
+	ROLLBACK Using sqlca_mirsa;
+ELSE
+	CLOSE sp_insert_sms_broadcast;
+	COMMIT Using sqlca_mirsa;				
+END IF
+
+sqlca_mirsa.autocommit = false
+===========================
+sp hitung umur
+===========================
+IF OBJECT_ID ('dbo.sp_Hitung_Umur') IS NOT NULL
+	DROP PROCEDURE dbo.sp_Hitung_Umur
+GO
+
+CREATE PROCEDURE dbo.sp_Hitung_Umur
+/***************************************************/
+/* Object-ID     : sp_Hitung_Umur                  */
+/* Module        : 01. Registrasi                  */
+/* Revise Number : 00                              */
+/* Object/SP     : spi_Reg_Surat_Pernyataan        */
+/* Created By    : Ayip 'Si AY' Afifuddin          */
+/* Created At    : 15 Agustus 2007                 */
+/* Description   : Sp untuk Menghitung Umur        */
+/* Modified By   :                                 */
+/* Modified At   :                                 */
+/* Modification  :                                 */
+/***************************************************/
+@TGL_SEKARANG    DateTime,
+@TGL_LAHIR       DateTime,
+@UMUR_HARI       Int Output,    
+@UMUR_BULAN      Int Output,     
+@UMUR_TAHUN      Int Output   
+AS
+BEGIN                
+   /* Script Untuk Hitung Umur Pasien berdasarkan tgl registrasi */
+   DECLARE @hari_skr  Int
+   DECLARE @bulan_skr Int
+   DECLARE @tahun_skr Int
+   DECLARE @hari_lhr  Int
+   DECLARE @bulan_lhr Int
+   DECLARE @tahun_lhr Int
+   DECLARE @tahun     Int
+   DECLARE @bulan     Int
+   DECLARE @hari      Int
+
+   SELECT @hari_skr  = DATEPART(day,   @TGL_SEKARANG)
+   SELECT @bulan_skr = DATEPART(month, @TGL_SEKARANG)
+   SELECT @tahun_skr = DATEPART(year,  @TGL_SEKARANG)
+   SELECT @hari_lhr  = DATEPART(day,   @TGL_LAHIR)
+   SELECT @bulan_lhr = DATEPART(month, @TGL_LAHIR)
+   SELECT @tahun_lhr = DATEPART(year,  @TGL_LAHIR)
+   
+   SELECT @tahun = @tahun_skr - @tahun_lhr
+   SELECT @bulan = @bulan_skr - @bulan_lhr
+   SELECT @hari  = @hari_skr - @hari_lhr
+   
+   IF (@bulan_skr < @bulan_lhr)
+      BEGIN
+         SELECT @tahun = @tahun - 1
+         SELECT @bulan = @bulan + 12
+      END
+   IF (@hari_skr < @hari_lhr)
+      BEGIN
+         SELECT @bulan = @bulan - 1
+         IF (@bulan < 0)
+            BEGIN
+               SELECT @tahun = @tahun - 1
+               SELECT @bulan = @bulan + 12
+            END
+            
+         IF (@bulan_lhr = 1) OR (@bulan_lhr = 3) OR (@bulan_lhr = 5) OR (@bulan_lhr = 7) OR
+            (@bulan_lhr = 8) OR (@bulan_lhr = 10) OR (@bulan_lhr = 12) SELECT @hari = @hari + 31
+         ELSE IF (@bulan_lhr = 2)
+            BEGIN
+               IF (@tahun_skr%4 <> 0) AND (@tahun_lhr%4 <> 0)
+                   BEGIN
+                      SELECT @hari = @hari + 28
+                   END
+                ELSE
+                   BEGIN
+                      SELECT @hari = @hari + 29
+                   END
+            END
+         ELSE IF (@bulan_lhr = 4) OR (@bulan_lhr = 6) OR (@bulan_lhr = 9) OR (@bulan_lhr = 11)
+            SELECT @hari = @hari + 30                       
+      END
+   SELECT @UMUR_HARI  = @hari
+   SELECT @UMUR_BULAN = @bulan
+   SELECT @UMUR_TAHUN = @tahun
+   /**/
+END
+
+GO
+
+==============================
+kerangka sp
+==============================
+IF OBJECT_ID ('dbo.sp_trans_akreditasi') IS NOT NULL
+	DROP PROCEDURE dbo.sp_trans_akreditasi
+GO
+
+CREATE PROCEDURE dbo.sp_trans_akreditasi
+/*******************************************************/
+/* Object-ID     : sp_trans_akreditasi                 */
+/* Module        : Pelayanan                           */
+/* Revise Number : 00       						   */
+/* Created By    : DANI                               */
+/* Created At    : 18/12/2014                          */
+/* Description   : Membuat Transaksi Akreditasi 	   */
+/* Ass           : -                             	   */
+/*******************************************************/
+
+@P_TGL_AWAL    DATETIME,
+@P_TGL_AKHIR   DATETIME,
+@P_KODE_GUDANG CHAR(3)
+
+AS
+BEGIN
+    SET TRANSACTION ISOLATION LEVEL 0
+	
+    DECLARE 
+    
+    CREATE TABLE #TMP_1 
+                 (
+                  
+	              )
+	            
+	DECLARE CUR_TRANS CURSOR FOR
+		(
+			Query_utama
+		)
+        
+	OPEN CUR_TRANS
+		 FETCH CUR_TRANS
+		  INTO @KD_JNS_TRANSAKSI,
+		       @NO_TRANSAKSI,
+		       @NO_RESEP
+         WHILE(@@SQLSTATUS = 0)
+	     BEGIN
+	     
+	         
+	     FETCH CUR_TRANS
+	      INTO @KD_JNS_TRANSAKSI,
+	           @NO_TRANSAKSI,
+			   @NO_RESEP
+    	 END
+    CLOSE CUR_TRANS
+	DEALLOCATE CURSOR CUR_TRANS
+	
+	SELECT #TMP_1.JENIS_BAYAR,
+	       #TMP_1.NM_JENIS_BAYAR,
+	       #TMP_1.KD_ASAL_RESEP,
+           #TMP_1.NAMA_POLI,
+           #TMP_1.LEMBAR_R,
+           --#TMP_1.NO_RESEP,
+           UANG_R = #TMP_1.TOTAL_TUSLAG,
+           #TMP_1.TOTAL_TGH,
+           #TMP_1.HANDLING
+         FROM #TMP_1
+     ORDER BY #TMP_1.JENIS_BAYAR,
+              #TMP_1.NAMA_POLI
+END
+
+
+GO
+
+==============================
+contoh commit di pb
+==============================
+UPDATE dbo.TRN_RESERVASI
+					  SET STATUS_RESERVASI ='4' 
+				 WHERE STATUS_RESERVASI = '6'
+					 AND NORM =  :ls_norm
+				  USING SQLCA;
+				  
+				 IF SQLCA.sqlcode < 0 THEN
+						ROLLBACK USING SQLCA;
+						gnv_msgbox.messagebox('Informasi','gagal update STATUS_RESERVASI ')
+						Return -1
+				 ELSE
+						COMMIT USING SQLCA;
+				END IF	
+===================================
+buka pdf
+===================================
+global function
+
+function int GetSystemMetrics(int nIndex) Library "user32.dll"
+Function Ulong ShellExecute(ULong hWnd, String s_operation, String s_file, String s_parameters, String s_directory, Integer i_showCmd) library "shell32.dll" alias for "ShellExecuteW"
+
+pemanggilan
+	ls_namefile = this.getitemstring( row, "file")
+	
+	IF ls_namefile = '' or isnull(ls_namefile ) THEN
+		Gnv_msgbox.MessageBox("Perhatian", "file hasil lab "+this.getitemstring( row, "nama")+" belum ada")
+		Return -1
+	END IF
+	
+	ls_pdf =  ProfileString (ls_inifile, "PELAYANAN", "path_lis","")+'\'+ls_namefile
+	ul_handle = Handle(getApplication())
+	ul_instance = ShellExecute(ul_handle, "open", ls_pdf, ls_null, ls_null, 2) //1 /*SW_SHOWNORMAL*/)
+========================================
+IF (Match(ls_phone , "[0-9][0-9][0-9]$") ) THEN
+				of_cek_prefik( ls_pesan, ls_phone, ls_sts_transmit)
+			end if			
+=========================================
+hitung umur
+-----------------------------------------
+date	ld_tglsekarang
+long	ll_tahunsekarang, ll_bulansekarang, ll_harisekarang
+long	ll_tahunlahir, ll_bulanlahir, ll_harilahir
+long	ll_tahun, ll_bulan, ll_hari
+
+/* Inisialisasi Umur Tahun, Umur Bulan dan Umur Hari */
+ll_tahun = 0
+ll_bulan = 0
+ll_hari  = 0
+
+/* Konversi Tahun */
+ll_tahunsekarang = Year(Date(tgl_sekarang))
+ll_tahunlahir    = Year(Date(tgl_lahir))
+
+/* Konversi Bulan */
+ll_bulansekarang = Month(Date(tgl_sekarang))
+ll_bulanlahir    = Month(Date(tgl_lahir))
+
+/* Konversi Hari */
+ll_harisekarang = Day(Date(tgl_sekarang))
+ll_harilahir    = Day(Date(tgl_lahir))
+
+ll_tahun = ll_tahunsekarang - ll_tahunlahir
+ll_bulan = ll_bulansekarang - ll_bulanlahir
+ll_hari  = ll_harisekarang  - ll_harilahir
+
+/* Hitung Umur Tahun */
+IF ll_bulansekarang < ll_bulanlahir THEN
+	ll_tahun = ll_tahun - 1
+	ll_bulan = ll_bulan + 12
+END IF
+
+/* Hitung Umur Bulan */
+IF ll_harisekarang < ll_harilahir THEN
+	ll_bulan = ll_bulan - 1
+	IF ll_bulan < 0 THEN
+		ll_tahun = ll_tahun - 1
+		ll_bulan = ll_bulan + 12
+	END IF
+	
+	CHOOSE CASE ll_bulanlahir
+		CASE 1, 3, 5, 7, 8, 10, 12
+			ll_hari = ll_hari + 31
+		CASE 2
+			IF (MOD (ll_tahunsekarang, 4) = 0) AND (MOD(ll_tahunlahir, 4) = 0) THEN
+				ll_hari = ll_hari + 29
+			END IF
+			
+			IF (MOD (ll_tahunsekarang, 4) <> 0) AND (MOD(ll_tahunlahir, 4) = 0) THEN
+				ll_hari = ll_hari + 29
+			END IF
+			
+			IF (MOD (ll_tahunsekarang, 4) = 0) AND (MOD(ll_tahunlahir, 4) <> 0) THEN
+				ll_hari = ll_hari + 29
+			END IF
+			
+			IF (MOD (ll_tahunsekarang, 4) <> 0) AND (MOD(ll_tahunlahir, 4) <> 0) THEN
+				ll_hari = ll_hari + 28
+			END IF
+		CASE 4, 6, 9, 11
+			ll_hari = ll_hari + 30
+	END CHOOSE
+END IF
+
+Return ll_tahun
+
+======================================================
+daftarin dll
+======================================================
+-*dcmd--
+C:\windows\system32>regsvr32 TeeChart5.ocx
+
+
+salah
+
+C:\windows\system32>regsvr32 C:\Windows\SysWOW64\TeeChart5.ocx
+=======================Cut Versi
+1. Remove from source control (source BUG)
+2. close source BUG
+3. copy from source CR to BUG
+   * application
+   * pbd
+   * pbr
+   * pbt
+   * pbl
+   * pbw
+   * configuration file
+   * folder (PBR)
+3a. Cek File JPEG (klo ada terbaru di copy)
+4. Open source BUG
+4. add to source control (source BUG)
+5. Modify versi on CR
+6. Copy pbd to folder encrypt from CR to BUG
+7. Buat folder baru di server 5, (folder aplikasi dan PBL) untuk versi CR yang baru. Copy dari folder CR yang lama.
+==========================================================
+Grafik
+==========================================================
+	SQLCA.Autocommit = TRUE
+		DECLARE Kur_Grafik CURSOR FOR
+		EXECUTE dbo.SPRS_RL5_2_Gab_New	:tahun, & 
+															:isi, &
+															:pilihan, &
+															'1';
+		OPEN Kur_Grafik;
+		
+		FETCH Kur_Grafik
+		INTO	:sPriode,:ldec_nilai;//,:iStd;
+		
+		DO WHILE (SQLCA.SQLCode = 0)  
+			
+			sNilai = f_global_replace(STRING(ldec_nilai), ".", ",", TRUE)
+		
+		//	IF i= 0 THEN
+				dw_report.object.ole_chart.object.Series(0).AddXY (DOUBLE(ll_row),DOUBLE(sNilai) ,sPriode, RGB(0,0,255))
+			//END IF
+			
+			dw_report.object.ole_chart.object.Series(i+1).AddXY (DOUBLE(ll_row),DOUBLE(ldec_nilai), sPriode,arrsWarna[i+1])
+			ll_row = ll_row + 1
+	
+			FETCH Kur_Grafik
+			INTO	:sPriode,:ldec_nilai;//,:iStd;
+		LOOP
+		
+		CLOSE Kur_Grafik;
+		SQLCA.Autocommit = FALSE
+	
+	NEXT
+===============================================================
+contoh triger insert
+===============================================================
+IF OBJECT_ID ('dbo.td_insert_reg_addreg') IS NOT NULL
+	DROP TRIGGER dbo.td_insert_reg_addreg
+GO
+
+create trigger td_insert_reg_addreg on REGISTRASI_BATAL for insert AS 
+
+/********************************************************************************************/
+/* Object-ID     : td_insert_reg_addreg                                                         */
+/* Module        : Bridging																	*/
+/* Revise Number : 00                                                                       */
+/* Created By    : Dani                                                            			*/
+/* Created At    : 20-10-2020                                                          		*/
+/* Description   : trigger untuk addreg ecalyptus											*/
+/* Assigment	 : 0038741																	*/
+/********************************************************************************************/
+
+begin    
+  
+  DECLARE  @xKD_INST			CHAR(2),
+	       @xKD_SUB_INST		CHAR(2),
+	       @xKD_DTL_SUB_INST	CHAR(2),
+	       @xNO_PENGUNJUNG		CHAR(12),
+	       @xNO_KUNJUNGAN		CHAR(3)
+   
+   IF NOT EXISTS (SELECT 1
+   					FROM S_TABEL_BRIDGING
+   				   WHERE TABEL		= 'PASIEN'
+   				     AND STS_AKTIF	= '1')
+   BEGIN
+   		RETURN
+   END
+   
+   declare cInsWO_HSL cursor for 
+   SELECT i.KD_INST,
+          i.KD_SUB_INST,
+          i.KD_DTL_SUB_INST,
+          i.NO_PENGUNJUNG,
+          i.NO_KUNJUNGAN
+    from inserted i, S_TABEL_BRIDGING s
+   WHERE (i.KD_INST			= s.KD_INST OR s.KD_INST = '%%')
+     AND (i.KD_SUB_INST		= s.KD_SUB_INST OR s.KD_SUB_INST = '%%')
+     AND (i.KD_DTL_SUB_INST	= s.KD_DTL_SUB_INST OR s.KD_DTL_SUB_INST = '%%')
+     AND s.TABEL			= 'PASIEN'
+     AND s.STS_AKTIF		= '1'
+ 
+  open cInsWO_HSL
+  fetch cInsWO_HSL into 
+  	   @xKD_INST,
+       @xKD_SUB_INST,
+       @xKD_DTL_SUB_INST,
+       @xNO_PENGUNJUNG,
+       @xNO_KUNJUNGAN
+  while @@sqlstatus = 0 begin 
+         
+		EXECUTE sp_emr_ipad_req_addreg @xKD_INST,@xKD_SUB_INST,@xKD_DTL_SUB_INST,@xNO_PENGUNJUNG,@xNO_KUNJUNGAN,'D'
+
+  fetch cInsWO_HSL into 
+	   @xKD_INST,
+	   @xKD_SUB_INST,
+	   @xKD_DTL_SUB_INST,
+	   @xNO_PENGUNJUNG,
+	   @xNO_KUNJUNGAN
+  end 
+  close cInsWO_HSL
+  deallocate cInsWO_HSL
+end
+
+
+
+
+
+
+
+
+
+GO
+
+=============================================
+triger delete
+=============================================
+IF OBJECT_ID ('dbo.td_tdokter_rsf') IS NOT NULL
+	DROP TRIGGER dbo.td_tdokter_rsf
+GO
+
+create trigger td_tdokter_rsf on TDOKTER_RSF for delete as
+begin
+----- Batas penambahan untuk trigger td_tdokter_rsf
+   /* Generated by sa at Mar  2 2011  8:24AM from sanglah */
+  /* declare @CURRENT_TIMESTAMP datetime, @CURRENT_USER varchar(30), 
+          @HOSTNAME  varchar(50), @FROM_WINDOW varchar(100)
+  if dbo.fc_MIRSAConfig("AUDIT_TRAIL_Activate", "TDOKTER_RSF") = "0" 
+  begin
+    goto ORIGINAL_TRIGGER
+  end -- if dbo.fc_MIRSAConfig("AUDIT_TRAIL_Activate" 
+ 
+  select @CURRENT_TIMESTAMP = getdate(), @CURRENT_USER = suser_name()
+  select @FROM_WINDOW = program_name from master..sysprocesses where spid =
+@@spid
+ 
+  declare @oKD_DOKTER_RSF char(3),
+          @oNM_DOKTER_RSF char(30),
+          @oALAMAT varchar(80),
+          @oGELAR varchar(30),
+          @oNO_TELP varchar(12),
+          @oHP1 varchar(14),
+          @oHP2 varchar(14),
+          @oTLP_KANTOR varchar(12),
+          @oFAX varchar(12),
+          @oNIP varchar(18),
+          @oUSERID varchar(4),
+          @oID_NUMBER varchar(8),
+          @oKD_SMF varchar(2),
+          @oKD_SPESIALISASI varchar(2),
+          @oSTATUS_AKTIF varchar(1),
+          @oKD_STATUS_DOKTER varchar(2),
+          @oKD_GOLONGAN varchar(3),
+     @LIST_FIELD varchar(3000), @LIST_OLDVALUE varchar(3000)
+ 
+  declare ctd_tdokter_rsf cursor for 
+  select d.KD_DOKTER_RSF,
+       d.NM_DOKTER_RSF,
+       d.ALAMAT,
+       d.GELAR,
+       d.NO_TELP,
+       d.HP1,
+       d.HP2,
+       d.TLP_KANTOR,
+       d.FAX,
+       d.NIP,
+       d.USERID,
+       d.ID_NUMBER,
+       d.KD_SMF,
+       d.KD_SPESIALISASI,
+       d.STATUS_AKTIF,
+       d.KD_STATUS_DOKTER,
+       d.KD_GOLONGAN
+  from deleted d
+ 
+  open ctd_tdokter_rsf
+  fetch ctd_tdokter_rsf into @oKD_DOKTER_RSF,
+       @oNM_DOKTER_RSF,
+       @oALAMAT,
+       @oGELAR,
+       @oNO_TELP,
+       @oHP1,
+       @oHP2,
+       @oTLP_KANTOR,
+       @oFAX,
+       @oNIP,
+       @oUSERID,
+       @oID_NUMBER,
+       @oKD_SMF,
+       @oKD_SPESIALISASI,
+       @oSTATUS_AKTIF,
+       @oKD_STATUS_DOKTER,
+       @oKD_GOLONGAN
+  while @@sqlstatus = 0 begin 
+    set @LIST_FIELD = "KD_DOKTER_RSF©"
+         + "NM_DOKTER_RSF©"
+         + "ALAMAT©"
+         + "GELAR©"
+         + "NO_TELP©"
+         + "HP1©"
+         + "HP2©"
+         + "TLP_KANTOR©"
+         + "FAX©"
+         + "NIP©"
+         + "USERID©"
+         + "ID_NUMBER©"
+         + "KD_SMF©"
+         + "KD_SPESIALISASI©"
+         + "STATUS_AKTIF©"
+         + "KD_STATUS_DOKTER©"
+         + "KD_GOLONGAN"
+    set @LIST_OLDVALUE = isnull(@oKD_DOKTER_RSF,"")+ char(169)
+         + isnull(@oNM_DOKTER_RSF,"")+ char(169)
+         + isnull(@oALAMAT,"")+ char(169)
+         + isnull(@oGELAR,"")+ char(169)
+         + isnull(@oNO_TELP,"")+ char(169)
+         + isnull(@oHP1,"")+ char(169)
+         + isnull(@oHP2,"")+ char(169)
+         + isnull(@oTLP_KANTOR,"")+ char(169)
+         + isnull(@oFAX,"")+ char(169)
+         + isnull(@oNIP,"")+ char(169)
+         + isnull(@oUSERID,"")+ char(169)
+         + isnull(@oID_NUMBER,"")+ char(169)
+         + isnull(@oKD_SMF,"")+ char(169)
+         + isnull(@oKD_SPESIALISASI,"")+ char(169)
+         + isnull(@oSTATUS_AKTIF,"")+ char(169)
+         + isnull(@oKD_STATUS_DOKTER,"")+ char(169)
+         + isnull(@oKD_GOLONGAN,"")
+ 
+    insert into TEMP_AUDIT_TRAIL (USERNAME, DT_CHANGE, HOSTNAME,
+TYPE_AUDIT_TRAIL, TABLE_NAME, LIST_FIELD, LIST_NEWVALUE, LIST_OLDVALUE,
+UNIQUEIDX_COMPONENT, FROM_WINDOW)
+         values (@CURRENT_USER, @CURRENT_TIMESTAMP, host_name(), 3,
+"TDOKTER_RSF", @LIST_FIELD, null, @LIST_OLDVALUE, "KD_DOKTER_RSF", @FROM_WINDOW)
+    fetch ctd_tdokter_rsf into @oKD_DOKTER_RSF,
+         @oNM_DOKTER_RSF,
+         @oALAMAT,
+         @oGELAR,
+         @oNO_TELP,
+         @oHP1,
+         @oHP2,
+         @oTLP_KANTOR,
+         @oFAX,
+         @oNIP,
+         @oUSERID,
+         @oID_NUMBER,
+         @oKD_SMF,
+         @oKD_SPESIALISASI,
+         @oSTATUS_AKTIF,
+         @oKD_STATUS_DOKTER,
+         @oKD_GOLONGAN
+  end -- while @SQLStatus = 0 
+  close ctd_tdokter_rsf
+  deallocate ctd_tdokter_rsf
+  -- akhir Batas penambahan untuk trigger td_tdokter_rsf
+ORIGINAL_TRIGGER: */
+
+    declare
+       @numrows  int,
+       @errno    int,
+       @errmsg   varchar(255)
+    select  @numrows = @@rowcount
+    if @numrows = 0
+       return
+    if exists (select 1
+               from   PASIEN_BAYI t2, deleted t1
+               where  t2.KD_DOKTER_RSF = t1.KD_DOKTER_RSF)
+       begin
+          select @errno  = 30006,
+                 @errmsg = 'Children still exist in "PASIEN_BAYI". Cannot delete
+parent "TDOKTER_RSF".'
+          goto error
+       end
+    if exists (select 1
+               from   RINC_TGH_TIND t2, deleted t1
+               where  t2.KD_DOKTER_RSF = t1.KD_DOKTER_RSF)
+       begin
+          select @errno  = 30006,
+                 @errmsg = 'Children still exist in "RINC_TGH_TIND". Cannot
+delete parent "TDOKTER_RSF".'
+          goto error
+       end
+    if exists (select 1
+               from   REKAP_RINC_LYN_MDK t2, deleted t1
+               where  t2.KD_DOKTER_RSF = t1.KD_DOKTER_RSF)
+       begin
+          select @errno  = 30006,
+                 @errmsg = 'Children still exist in "REKAP_RINC_LYN_MDK". Cannot
+delete parent "TDOKTER_RSF".'
+          goto error
+       end
+    if exists (select 1
+               from   DUP_RINC_TGH_TIND t2, deleted t1
+               where  t2.KD_DOKTER_RSF = t1.KD_DOKTER_RSF)
+       begin
+          select @errno  = 30006,
+                 @errmsg = 'Children still exist in "DUP_RINC_TGH_TIND". Cannot
+delete parent "TDOKTER_RSF".'
+          goto error
+       end
+    if exists (select 1
+               from   VISITE_DOKTER t2, deleted t1
+               where  t2.KD_DOKTER_RSF = t1.KD_DOKTER_RSF)
+       begin
+          select @errno  = 30006,
+                 @errmsg = 'Children still exist in "VISITE_DOKTER". Cannot
+delete parent "TDOKTER_RSF".'
+          goto error
+       end
+    if exists (select 1
+               from   JADWAL_JAGA t2, deleted t1
+               where  t2.KD_DOKTER_RSF = t1.KD_DOKTER_RSF)
+       begin
+          select @errno  = 30006,
+                 @errmsg = 'Children still exist in "JADWAL_JAGA". Cannot delete
+parent "TDOKTER_RSF".'
+          goto error
+       end
+    if exists (select 1
+               from   PASIEN_NO_RM_MAYAT t2, deleted t1
+               where  t2.KD_DOKTER_RSF = t1.KD_DOKTER_RSF)
+       begin
+           select @errno  = 30006,
+                 @errmsg = 'Children still exist in "PASIEN_NO_RM_MAYAT". Cannot
+delete parent "TDOKTER_RSF".'
+          goto error
+       end
+    if exists (select 1
+               from   PASIEN_NON_RM_MAYAT t2, deleted t1
+               where  t2.KD_DOKTER_RSF = t1.KD_DOKTER_RSF)
+       begin
+          select @errno  = 30006,
+                 @errmsg = 'Children still exist in "PASIEN_NON_RM_MAYAT".
+Cannot delete parent "TDOKTER_RSF".'
+          goto error
+       end
+    delete DOKTER_TUGAS
+    from   DOKTER_TUGAS t2, deleted t1
+    where  t2.KD_DOKTER_RSF = t1.KD_DOKTER_RSF
+    delete RESERVASI
+    from   RESERVASI t2, deleted t1
+    where  t2.KD_DOKTER_RSF = t1.KD_DOKTER_RSF
+    delete RESERVASI
+    from   RESERVASI t2, deleted t1
+    where  t2.KD_DOKTER_RSF_KHUSUS = t1.KD_DOKTER_RSF
+    delete DOKTER_INSTALASI
+    from   DOKTER_INSTALASI t2, deleted t1
+    where  t2.KD_DOKTER_RSF = t1.KD_DOKTER_RSF
+    delete PEMINJAM_RM
+    from   PEMINJAM_RM t2, deleted t1
+    where  t2.KD_DOKTER_RSF = t1.KD_DOKTER_RSF
+    delete JADWAL_PRAKTEK
+    from   JADWAL_PRAKTEK t2, deleted t1
+    where  t2.KD_DOKTER_RSF = t1.KD_DOKTER_RSF
+    delete RUJUKAN_MASUK
+    from   RUJUKAN_MASUK t2, deleted t1
+    where  t2.KD_DOKTER_RSF = t1.KD_DOKTER_RSF
+    delete WORK_ORDER
+    from   WORK_ORDER t2, deleted t1
+    where  t2.KD_DOKTER_RSF = t1.KD_DOKTER_RSF
+    delete DOKTER_JAGA
+    from   DOKTER_JAGA t2, deleted t1
+    where  t2.KD_DOKTER_RSF = t1.KD_DOKTER_RSF
+    delete HASIL_PERIKSA_MAYAT
+     from   HASIL_PERIKSA_MAYAT t2, deleted t1
+    where  t2.KD_DOKTER_RSF = t1.KD_DOKTER_RSF
+    delete TEAM_DR
+    from   TEAM_DR t2, deleted t1
+    where  t2.KD_DOKTER_RSF = t1.KD_DOKTER_RSF
+    delete IRDTOLONG
+    from   IRDTOLONG t2, deleted t1
+    where  t2.KD_DOKTER_RSF = t1.KD_DOKTER_RSF
+    delete RINC_LAYAN_MEDIK
+    from   RINC_LAYAN_MEDIK t2, deleted t1
+    where  t2.KD_DOKTER_RSF = t1.KD_DOKTER_RSF
+    delete RUJUKAN
+    from   RUJUKAN t2, deleted t1
+    where  t2.KD_DOKTER_RSF = t1.KD_DOKTER_RSF
+    delete OBAT_PASIEN
+    from   OBAT_PASIEN t2, deleted t1
+    where  t2.KD_DOKTER_RSF = t1.KD_DOKTER_RSF
+    delete PAKAI_LBDARAH
+    from   PAKAI_LBDARAH t2, deleted t1
+    where  t2.KD_DOKTER_RSF = t1.KD_DOKTER_RSF
+    delete JADWAL_VISITE
+    from   JADWAL_VISITE t2, deleted t1
+    where  t2.KD_DOKTER_RSF = t1.KD_DOKTER_RSF
+    delete HIST_OBAT_TDK_ADA
+    from   HIST_OBAT_TDK_ADA t2, deleted t1
+    where  t2.KD_DOKTER_RSF = t1.KD_DOKTER_RSF
+    delete ORD_RTN_MAKAN
+    from   ORD_RTN_MAKAN t2, deleted t1
+    where  t2.KD_DOKTER_RSF = t1.KD_DOKTER_RSF
+    return
+error:
+    raiserror @errno @errmsg
+    rollback  transaction
+end
+
+GO
+================================
+triger update
+================================
+IF OBJECT_ID ('dbo.tu_ttidur') IS NOT NULL
+	DROP TRIGGER dbo.tu_ttidur
+GO
+
+create trigger tu_ttidur on TTIDUR for update as
+begin
+----- Batas penambahan untuk trigger tu_ttidur
+   /* Generated by sa at Mar  2 2011  8:24AM from sanglah */
+  /* declare @CURRENT_TIMESTAMP datetime, @CURRENT_USER varchar(30), 
+          @HOSTNAME  varchar(50), @FROM_WINDOW varchar(100)
+  if dbo.fc_MIRSAConfig("AUDIT_TRAIL_Activate", "TTIDUR") = "0" 
+  begin
+    goto ORIGINAL_TRIGGER
+  end -- if dbo.fc_MIRSAConfig("AUDIT_TRAIL_Activate" 
+ 
+  select @CURRENT_TIMESTAMP = getdate(), @CURRENT_USER = suser_name()
+  select @FROM_WINDOW = program_name from master..sysprocesses where spid =
+@@spid
+ 
+  declare @xKD_RRAWAT char(2),
+          @oKD_RRAWAT char(2),
+          @xKD_KAMAR char(2),
+          @oKD_KAMAR char(2),
+          @xNO_TTIDUR char(4),
+          @oNO_TTIDUR char(4),
+          @xSTATUS_PAKAI char(1),
+          @oSTATUS_PAKAI char(1),
+          @xTGL_PAKAI datetime,
+          @oTGL_PAKAI datetime,
+          @xKD_INST varchar(2),
+          @oKD_INST varchar(2),
+          @xKD_SUB_INST varchar(2),
+          @oKD_SUB_INST varchar(2),
+          @xKD_DTL_SUB_INST varchar(2),
+          @oKD_DTL_SUB_INST varchar(2),
+          @xNO_PENGUNJUNG varchar(12),
+          @oNO_PENGUNJUNG varchar(12),
+          @xNO_KUNJUNGAN varchar(3),
+          @oNO_KUNJUNGAN varchar(3),
+          @xTGL_SIAP_PAKAI datetime,
+          @oTGL_SIAP_PAKAI datetime,
+          @xSTATUS_AKTIF varchar(1),
+          @oSTATUS_AKTIF varchar(1),
+     @LIST_FIELD varchar(3000), @LIST_NEWVALUE varchar(3000)
+     , @LIST_OLDVALUE varchar(3000)
+ 
+  declare ctu_ttidur cursor for 
+  select i.KD_RRAWAT,
+       d.KD_RRAWAT,
+       i.KD_KAMAR,
+       d.KD_KAMAR,
+       i.NO_TTIDUR,
+       d.NO_TTIDUR,
+       i.STATUS_PAKAI,
+       d.STATUS_PAKAI,
+       i.TGL_PAKAI,
+       d.TGL_PAKAI,
+       i.KD_INST,
+       d.KD_INST,
+       i.KD_SUB_INST,
+       d.KD_SUB_INST,
+       i.KD_DTL_SUB_INST,
+       d.KD_DTL_SUB_INST,
+       i.NO_PENGUNJUNG,
+       d.NO_PENGUNJUNG,
+       i.NO_KUNJUNGAN,
+       d.NO_KUNJUNGAN,
+       i.TGL_SIAP_PAKAI,
+       d.TGL_SIAP_PAKAI,
+       i.STATUS_AKTIF,
+       d.STATUS_AKTIF
+  from inserted i
+  join deleted d on d.KD_RRAWAT = i.KD_RRAWAT
+                and d.KD_KAMAR = i.KD_KAMAR
+                and d.NO_TTIDUR = i.NO_TTIDUR
+ 
+  open ctu_ttidur
+  fetch ctu_ttidur into @xKD_RRAWAT,
+       @oKD_RRAWAT,
+       @xKD_KAMAR,
+       @oKD_KAMAR,
+       @xNO_TTIDUR,
+       @oNO_TTIDUR,
+       @xSTATUS_PAKAI,
+       @oSTATUS_PAKAI,
+       @xTGL_PAKAI,
+       @oTGL_PAKAI,
+       @xKD_INST,
+       @oKD_INST,
+       @xKD_SUB_INST,
+       @oKD_SUB_INST,
+       @xKD_DTL_SUB_INST,
+       @oKD_DTL_SUB_INST,
+       @xNO_PENGUNJUNG,
+       @oNO_PENGUNJUNG,
+       @xNO_KUNJUNGAN,
+       @oNO_KUNJUNGAN,
+       @xTGL_SIAP_PAKAI,
+       @oTGL_SIAP_PAKAI,
+       @xSTATUS_AKTIF,
+       @oSTATUS_AKTIF
+  while @@sqlstatus = 0 begin 
+    set @LIST_FIELD = "KD_RRAWAT©"
+         + "KD_KAMAR©"
+         + "NO_TTIDUR©"
+         + "STATUS_PAKAI©"
+         + "TGL_PAKAI©"
+         + "KD_INST©"
+         + "KD_SUB_INST©"
+         + "KD_DTL_SUB_INST©"
+         + "NO_PENGUNJUNG©"
+         + "NO_KUNJUNGAN©"
+         + "TGL_SIAP_PAKAI©"
+         + "STATUS_AKTIF"
+    set @LIST_NEWVALUE = isnull(@xKD_RRAWAT,"")+ char(169)
+         + isnull(@xKD_KAMAR,"")+ char(169)
+         + isnull(@xNO_TTIDUR,"")+ char(169)
+         + isnull(@xSTATUS_PAKAI,"")+ char(169)
+         + convert(varchar(1000), isnull(@xTGL_PAKAI,"1950-01-01"))+ char(169)
+         + isnull(@xKD_INST,"")+ char(169)
+         + isnull(@xKD_SUB_INST,"")+ char(169)
+         + isnull(@xKD_DTL_SUB_INST,"")+ char(169)
+         + isnull(@xNO_PENGUNJUNG,"")+ char(169)
+         + isnull(@xNO_KUNJUNGAN,"")+ char(169)
+         + convert(varchar(1000), isnull(@xTGL_SIAP_PAKAI,"1950-01-01"))+
+char(169)
+        + isnull(@xSTATUS_AKTIF,"")
+    set @LIST_OLDVALUE = isnull(@oKD_RRAWAT,"")+ char(169)
+         + isnull(@oKD_KAMAR,"")+ char(169)
+         + isnull(@oNO_TTIDUR,"")+ char(169)
+         + isnull(@oSTATUS_PAKAI,"")+ char(169)
+         + convert(varchar(1000), isnull(@oTGL_PAKAI,"1950-01-01"))+ char(169)
+         + isnull(@oKD_INST,"")+ char(169)
+         + isnull(@oKD_SUB_INST,"")+ char(169)
+         + isnull(@oKD_DTL_SUB_INST,"")+ char(169)
+         + isnull(@oNO_PENGUNJUNG,"")+ char(169)
+         + isnull(@oNO_KUNJUNGAN,"")+ char(169)
+         + convert(varchar(1000), isnull(@oTGL_SIAP_PAKAI,"1950-01-01"))+
+char(169)
+         + isnull(@oSTATUS_AKTIF,"")
+ 
+    if isnull(@LIST_NEWVALUE,'') <> isnull(@LIST_OLDVALUE,'') begin
+      insert into TEMP_AUDIT_TRAIL (USERNAME, DT_CHANGE, HOSTNAME,
+TYPE_AUDIT_TRAIL, TABLE_NAME, LIST_FIELD, LIST_NEWVALUE, LIST_OLDVALUE,
+UNIQUEIDX_COMPONENT, FROM_WINDOW)
+         values (@CURRENT_USER, @CURRENT_TIMESTAMP, host_name(), 2, "TTIDUR",
+@LIST_FIELD, @LIST_NEWVALUE, @LIST_OLDVALUE, "KD_RRAWAT©KD_KAMAR©NO_TTIDUR",
+@FROM_WINDOW)
+    end -- 
+    fetch ctu_ttidur into @xKD_RRAWAT,
+         @oKD_RRAWAT,
+         @xKD_KAMAR,
+         @oKD_KAMAR,
+         @xNO_TTIDUR,
+         @oNO_TTIDUR,
+         @xSTATUS_PAKAI,
+         @oSTATUS_PAKAI,
+         @xTGL_PAKAI,
+         @oTGL_PAKAI,
+         @xKD_INST,
+         @oKD_INST,
+         @xKD_SUB_INST,
+         @oKD_SUB_INST,
+         @xKD_DTL_SUB_INST,
+         @oKD_DTL_SUB_INST,
+         @xNO_PENGUNJUNG,
+         @oNO_PENGUNJUNG,
+         @xNO_KUNJUNGAN,
+         @oNO_KUNJUNGAN,
+         @xTGL_SIAP_PAKAI,
+         @oTGL_SIAP_PAKAI,
+         @xSTATUS_AKTIF,
+         @oSTATUS_AKTIF
+  end -- while @SQLStatus = 0 
+  close ctu_ttidur
+  deallocate ctu_ttidur
+  -- akhir Batas penambahan untuk trigger tu_ttidur
+ORIGINAL_TRIGGER: */
+ 
+
+   declare
+      @maxcard  int,
+      @numrows  int,
+      @numnull  int,
+      @errno    int,
+      @errmsg   varchar(255)
+      select  @numrows = @@rowcount
+      if @numrows = 0
+         return
+      if update(KD_RRAWAT) or
+         update(KD_KAMAR)
+      begin
+         if (select count(*)
+             from   TKAMAR t1, inserted t2
+             where  t1.KD_RRAWAT = t2.KD_RRAWAT
+              and   t1.KD_KAMAR = t2.KD_KAMAR) != @numrows
+            begin
+               select @errno  = 30003,
+                      @errmsg = '"TKAMAR" does not exist.' + 
+ 'Cannot modify child in
+"TTIDUR".'
+               goto error
+            end
+      end
+      if update(KD_RRAWAT) or
+         update(KD_KAMAR) or
+         update(NO_TTIDUR)
+      begin
+         if exists (select 1
+                    from   REGISTRASI_MUTASI t2, inserted i1, deleted d1
+                    where  t2.KD_RRAWAT_TJN = d1.KD_RRAWAT
+                     and   t2.KD_KAMAR_TJN = d1.KD_KAMAR
+                     and   t2.NO_TTIDUR_TJN = d1.NO_TTIDUR
+                     and  (i1.KD_RRAWAT != d1.KD_RRAWAT
+                      or   i1.KD_KAMAR != d1.KD_KAMAR
+                      or   i1.NO_TTIDUR != d1.NO_TTIDUR))
+            begin
+               select @errno  = 30005,
+                      @errmsg = 'Children still exist in "REGISTRASI_MUTASI".
+Cannot modify parent code in "TTIDUR".'
+               goto error
+            end
+      end
+      if update(KD_RRAWAT) or
+         update(KD_KAMAR) or
+          update(NO_TTIDUR)
+      begin
+         if exists (select 1
+                    from   RESERVASI t2, inserted i1, deleted d1
+                    where  t2.KD_RRAWAT = d1.KD_RRAWAT
+                     and   t2.KD_KAMAR = d1.KD_KAMAR
+                     and   t2.NO_TTIDUR = d1.NO_TTIDUR
+                     and  (i1.KD_RRAWAT != d1.KD_RRAWAT
+                      or   i1.KD_KAMAR != d1.KD_KAMAR
+                      or   i1.NO_TTIDUR != d1.NO_TTIDUR))
+            begin
+               select @errno  = 30005,
+                      @errmsg = 'Children still exist in "RESERVASI".' + 
+ 'Cannot modify parent code in "TTIDUR".'
+               goto error
+            end
+      end
+      if update(KD_RRAWAT) or
+         update(KD_KAMAR) or
+         update(NO_TTIDUR)
+      begin
+         if exists (select 1
+                    from   DIRAWAT t2, inserted i1, deleted d1
+                    where  t2.KD_RRAWAT = d1.KD_RRAWAT
+                     and   t2.KD_KAMAR = d1.KD_KAMAR
+                     and   t2.NO_TTIDUR = d1.NO_TTIDUR
+                     and  (i1.KD_RRAWAT != d1.KD_RRAWAT
+                      or   i1.KD_KAMAR != d1.KD_KAMAR
+                      or   i1.NO_TTIDUR != d1.NO_TTIDUR))
+            begin
+               select @errno  = 30005,
+                      @errmsg = 'Children still exist in "DIRAWAT".' + 
+ 'Cannot modify parent code in "TTIDUR".'
+               goto error
+            end
+      end
+      if update(KD_RRAWAT) or
+         update(KD_KAMAR) or
+         update(NO_TTIDUR)
+      begin
+         if exists (select 1
+                    from   REGISTRASI_KELUAR t2, inserted i1, deleted d1
+                    where  t2.KD_RRAWAT = d1.KD_RRAWAT
+                     and   t2.KD_KAMAR = d1.KD_KAMAR
+                     and   t2.NO_TTIDUR = d1.NO_TTIDUR
+                     and  (i1.KD_RRAWAT != d1.KD_RRAWAT
+                      or   i1.KD_KAMAR != d1.KD_KAMAR
+                      or   i1.NO_TTIDUR != d1.NO_TTIDUR))
+            begin
+               select @errno  = 30005,
+                      @errmsg = 'Children still exist in "REGISTRASI_KELUAR".
+Cannot modify parent code in "TTIDUR".'
+               goto error
+            end
+      end
+      if update(KD_RRAWAT) or
+         update(KD_KAMAR) or
+         update(NO_TTIDUR)
+      begin
+         if exists (select 1
+                    from   REGISTRASI_MUTASI t2, inserted i1, deleted d1
+                    where  t2.KD_RRAWAT = d1.KD_RRAWAT
+                     and   t2.KD_KAMAR = d1.KD_KAMAR
+                     and   t2.NO_TTIDUR = d1.NO_TTIDUR
+                     and  (i1.KD_RRAWAT != d1.KD_RRAWAT
+                      or   i1.KD_KAMAR != d1.KD_KAMAR
+                      or   i1.NO_TTIDUR != d1.NO_TTIDUR))
+            begin
+               select @errno  = 30005,
+                      @errmsg = 'Children still exist in "REGISTRASI_MUTASI".
+Cannot modify parent code in "TTIDUR".'
+               goto error
+            end
+      end
+      if update(KD_RRAWAT) or
+         update(KD_KAMAR) or
+         update(NO_TTIDUR)
+      begin
+         if exists (select 1
+                    from   TROPERASI t2, inserted i1, deleted d1
+                    where  t2.KD_RRAWAT = d1.KD_RRAWAT
+                     and   t2.KD_KAMAR = d1.KD_KAMAR
+                     and   t2.NO_TTIDUR = d1.NO_TTIDUR
+                     and  (i1.KD_RRAWAT != d1.KD_RRAWAT
+                      or   i1.KD_KAMAR != d1.KD_KAMAR
+                      or   i1.NO_TTIDUR != d1.NO_TTIDUR))
+            begin
+               select @errno  = 30005,
+                      @errmsg = 'Children still exist in "TROPERASI".' + 
+ 'Cannot modify parent code in "TTIDUR".'
+               goto error
+            end
+      end
+      if update(KD_RRAWAT) or
+         update(KD_KAMAR) or
+         update(NO_TTIDUR)
+      begin
+         update PEMAKAI_TERAKHIR
+          set   KD_RRAWAT = i1.KD_RRAWAT,
+                KD_KAMAR = i1.KD_KAMAR,
+                NO_TTIDUR = i1.NO_TTIDUR
+         from   PEMAKAI_TERAKHIR t2, inserted i1, deleted d1
+         where  t2.KD_RRAWAT = d1.KD_RRAWAT
+          and   t2.KD_KAMAR = d1.KD_KAMAR
+           and   t2.NO_TTIDUR = d1.NO_TTIDUR
+          and  (i1.KD_RRAWAT != d1.KD_RRAWAT or
+                i1.KD_KAMAR != d1.KD_KAMAR or
+                i1.NO_TTIDUR != d1.NO_TTIDUR)
+      end
+      return
+error:
+    raiserror @errno @errmsg
+    rollback  transaction
+end
+
+GO
+=======================================================
+ls_kdicd9cm = data
+	IF (Len(ls_kdicd9cm) > 2) THEN
+		ls_kdicd9cm_1 = MID(ls_kdicd9cm,1, 2)
+		IF (Mid(ls_kdicd9cm, 3, 1) = ".") THEN
+			ls_kdicd9cm = data
+		ELSE
+			ls_kdicd9cm_2 = Mid(ls_kdicd9cm,3,2)
+			ls_kdicd9cm	  = ls_kdicd9cm_1 + "." + ls_kdicd9cm_2			
+		END IF
+	ELSE
+		ls_akhir = MID(ls_kdicd9cm, Len(ls_kdicd9cm), 1)
+		IF ls_akhir <> '.' THEN
+			ls_kdicd9cm = ls_kdicd9cm + '.'	
+		END IF
+	END IF
+================================================================
+SELECT @durasi_tind_awal_alat = 0
+               SELECT @tind_awal_alat        = NULL 
+               
+               SELECT @durasi_detik = 0
+               SELECT @durasi_menit = 0
+               SELECT @durasi_jam   = 0
+               
+               SELECT @durasi_detik_temp = 0
+               SELECT @durasi_menit_temp = 0
+                   
+               IF (@tgl_transaksi <> NULL) AND (@tgl_awal_alat <> NULL)
+                  BEGIN
+                     SELECT @durasi_detik   = DATEDIFF(SECOND, @tgl_transaksi, @tgl_awal_alat)
+                     
+                     IF @durasi_detik < 0
+                        BEGIN
+                           SELECT @durasi_detik = 0
+                        END
+                        
+                     SELECT @durasi_tind_awal_alat = @durasi_detik   
+                        
+                     IF @durasi_detik > 60 
+                        BEGIN
+                           SELECT @durasi_menit      = DATEDIFF(MINUTE, @tgl_transaksi, @tgl_awal_alat)
+                           SELECT @durasi_detik_temp = @durasi_detik - (60*@durasi_menit)         
+                           
+                           SELECT @durasi_tind_awal_alat = @durasi_menit
+                           
+                           IF @durasi_menit > 60 
+                              BEGIN
+                                 SELECT @durasi_jam        = DATEDIFF(HOUR, @tgl_transaksi, @tgl_awal_alat)
+                                 SELECT @durasi_menit_temp = @durasi_menit - (60*@durasi_jam)
+                                 SELECT @durasi_detik_temp = @durasi_detik - (60*@durasi_menit)  
+                                 
+                                 SELECT @durasi_tind_awal_alat = @durasi_jam                               
+                                 
+                                 IF @durasi_jam > 24 
+                                    BEGIN
+                                       SELECT @durasi_tind_awal_alat = DATEDIFF(Day, @tgl_transaksi, @tgl_awal_alat)
+                                       SELECT @tind_awal_alat        = Convert(Char(10), @durasi_tind_awal_alat) + ' Hari'
+                                    END
+                                 ELSE
+                                    BEGIN
+                                       SELECT @tind_awal_alat    = Convert(Char(2), @durasi_jam) + ' Jam ' + Convert(Char(2), @durasi_menit_temp) + ' Menit ' + Convert(Char(2), @durasi_detik_temp) + ' Detik'
+                                    END    
+                              END
+                           ELSE
+                              BEGIN
+                                 SELECT @tind_awal_alat    = Convert(Char(2), @durasi_menit) + ' Menit ' + Convert(Char(2), @durasi_detik_temp) + ' Detik'
+                              END   
+                        END
+                     ELSE
+                        BEGIN                           
+                           SELECT @tind_awal_alat = Convert(Char(2), @durasi_detik) + ' Detik'
+                        END   
+                  END
+                  
+=========================
+ls_kdicd9cm = data
+	IF (Len(ls_kdicd9cm) > 2) THEN
+		ls_kdicd9cm_1 = MID(ls_kdicd9cm,1, 2)
+		IF (Mid(ls_kdicd9cm, 3, 1) = ".") THEN
+			ls_kdicd9cm = data
+		ELSE
+			ls_kdicd9cm_2 = Mid(ls_kdicd9cm,3,2)
+			ls_kdicd9cm	  = ls_kdicd9cm_1 + "." + ls_kdicd9cm_2			
+		END IF
+	ELSE
+		ls_akhir = MID(ls_kdicd9cm, Len(ls_kdicd9cm), 1)
+		IF ls_akhir <> '.' THEN
+			ls_kdicd9cm = ls_kdicd9cm + '.'	
+		END IF
+	END IF
+============================
+function get hari
+	SELECT arg_hari = datepart(dw, @arg_tgl)
+	
+--	IF @arg_hari = 1 SELECT @ars_hari = 'Minggu'
+--	ELSE IF @arg_hari = 2 SELECT @ars_hari = 'Senin'
+--	ELSE IF @arg_hari = 3 SELECT @ars_hari = 'Selasa'
+--	ELSE IF @arg_hari = 4 SELECT @ars_hari = 'Rabu'
+--	ELSE IF @arg_hari = 5 SELECT @ars_hari = 'Kamis'
+--	ELSE IF @arg_hari = 6 SELECT @ars_hari = 'Jumat'
+--	ELSE IF @arg_hari = 7 SELECT @ars_hari = 'Sabtu'
+
+contoh exeute sp
+DECLARE cur_hari PROCEDURE FOR
+	spr_get_hari @arg_tgl = :adt_tanggal,
+					 @arg_hari = :ll_hari OUTPUT
+	USING SQLCA_SDM;
+EXECUTE cur_hari;
+FETCH cur_hari INTO :ll_hari;
+CLOSE cur_hari ;
+========================================================
+IF (not isvalid(message.powerobjectparm)) then	
+	em_norm.SetFocus()
+	return -1
+end if
+================================
+ls_ini_site    = gnv_app.of_getappinifile ()
+ls_drive   		= ProfileString(is_ini_site,"RM","drive", "")
+===================================
+	/* Open a print job. */
+	ll_job = PrintOpen()
+	IF ll_job = -1 THEN
+		MessageBox ("Peringatan", "Gagal Mendapatkan 'Print Job'", Exclamation!)
+		Return 
+	END IF
+	// --> Kirim Variabel-nya
+	PrintSend(ll_job, "^XA")
+	PrintSend(ll_job, "^PR4")
+	PrintSend(ll_job, "^LH"+String(ll_posx)+",0^FS")
+	PrintSend(ll_job, "^LL200")
+	PrintSend(ll_job, "^MD20")
+	PrintSend(ll_job, "^MMT")
+	PrintSend(ll_job, "^MNY")
+			
+	IF UPPER(is_sts_site) = "KNJ" THEN
+		PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+8)+"^A0N,32,28^CI13^FR^FD" + "SID: " + as_sampleid + "^FS")	
+		PrintSend(ll_job, "^FO"+String(223+ll_posx)+","+String(ll_batas_y+9)+"^A0N,19,19^CI13^FR^FD" + "Tgl. Lahir: " + String(ad_tgllahir,'dd/mm/yyyy') + "^FS")
+		PrintSend(ll_job, "^FO"+String(150+ll_posx)+","+String(ll_batas_y+147)+"^A0N,19,19^CI13^FR^FD" +' '+ String(ld_tanggal, 'dd/mm/yyyy hh:mm') +"^FS")
+		PrintSend(ll_job, "^BY2,2.0^FO"+String(40+ll_posx)+","+String(ll_batas_y+37)+"^B3N,N,104,N,Y^FR^FD" + as_sampleid_bar + "^FS")
+		PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+145)+"^A0N,24,21^CI13^FR^FD" + "RM: " + as_norm + "^FS")
+		PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+171)+"^A0N,24,21^CI13^FR^FD" + as_nama + "^FS")
+	ELSEIF UPPER(is_sts_site) = "CMCN" THEN
+		PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+8)+"^A0N,32,28^CI13^FR^FD" + "SID: " + as_sampleid + "^FS")	
+		PrintSend(ll_job, "^FO"+String(233+ll_posx)+","+String(ll_batas_y+9)+"^A0N,27,23^CI13^FR^FD" + "RS: " + as_sampleidrs + "^FS")
+		PrintSend(ll_job, "^BY2,2.0^FO"+String(40+ll_posx)+","+String(ll_batas_y+37)+"^B3N,N,75,N,Y^FR^FD" + as_sampleid_bar + "^FS")
+		PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+119)+"^A0N,24,21^CI13^FR^FD" + "RM: " + as_norm +' ('+ls_kelamin+') '+String(ad_tgllahir,'dd/mm/yyyy')+ "^FS")
+//		PrintSend(ll_job, "^FO"+String(155+ll_posx)+","+String(ll_batas_y+119)+"^A0N,24,21^CI13^FR^FD" + String(ld_tanggal,'dd/mm/yyyy hh:mm')+"^FS")
+//		PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+145)+"^A0N,24,23^CI13^FR^FD"+"Umur :" +  String(li_tahun) + "th/"+String(li_bulan) + "bl/"+' '+ String(li_hari)+"hr" +" ("+ls_kelamin+") "+String(ad_tgllahir,'dd/mm/yyyy')+"^FS")
+		PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+145)+"^A0N,24,23^CI13^FR^FD"+"Tgl.Reg :"+String(ld_tanggal,'dd/mm/yyyy hh:mm')+"^FS")
+		PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+171)+"^A0N,24,21^CI13^FR^FD" + as_nama + "^FS")
+	//add by dani,0032954
+	ELSEIF UPPER(is_sts_site) = "BAP" THEN
+		PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+12)+"^A0N,32,28^CI13^FR^FD" + "SID: " + as_sampleid + "^FS")	
+		PrintSend(ll_job, "^FO"+String(233+ll_posx)+","+String(ll_batas_y+15)+"^A0N,27,23^CI13^FR^FD" + "RS: " + as_sampleidrs + "^FS")
+		PrintSend(ll_job, "^BY2,2.0^FO"+String(40+ll_posx)+","+String(ll_batas_y+43)+"^B3N,N,80,N,Y^FR^FD" + as_sampleid_bar + "^FS")
+		PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+130)+"^A0N,24,21^CI13^FR^FD" + "RM: " + as_norm + "^FS")
+		PrintSend(ll_job, "^FO"+String(150+ll_posx)+","+String(ll_batas_y+129)+"^A0N,19,19^CI13^FR^FD" +'  -  '+ String(ld_tanggal, 'dd/mm/yyyy hh:mm') +"^FS")
+		PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+154)+"^A0N,24,21^CI13^FR^FD" + as_nama + "^FS")
+		PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+178)+"^A0N,24,21^CI13^FR^FD"+"Tgl. Lahir : " + String(ad_tgllahir,'dd/mm/yyyy') + "^FS")
+	//end 0032954
+	
+	//Added by Atikah at 2019, 22 July. (Mantis 35431)
+	ELSEIF UPPER(is_sts_site) = "B" THEN			
+//		PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+12)+"^A0N,26,26^CI13^FR^F"+ as_nama + "^FS")	
+//		PrintSend(ll_job, "^FO"+String(29+ll_posx)+","+String(ll_batas_y+15)+"^A0N,22,22^CI13^FR^FD" + "No. RM: " + as_norm + "  (" + ls_alamat + ") " + String(ad_tgllahir, 'dd/mm/yyyy') +  ' '+ "RS: " + as_sampleidrs + "^FS")
+//		PrintSend(ll_job, "^FO"+String(63+ll_posx)+","+String(ll_batas_y+15)+"^A0N,22,22^CI13^FR^FD" + 'Umur' + String(li_tahun) + " th / " + String(li_bulan) + " bl / " + String(li_hari) + " hr" + "^FS")
+//		PrintSend(ll_job, "^FO"+String(87+ll_posx)+","+String(ll_batas_y+15)+"^A0N,22,22^CI13^FR^FD" + 'Alamat'+ + ls_alamat +  "^FS")
+//		PrintSend(ll_job, "^BY2,2.0^FO"+String(111+ll_posx)+","+String(ll_batas_y+43)+"^B3N,N,64,N,Y^FR^FD" + as_sampleid_bar + "^FS")
+//		PrintSend(ll_job, "^FO"+String(181+ll_posx)+","+String(ll_batas_y+129)+"^A0N,20,20^CI13^FR^FD" +"SID: " + as_sampleid + ' '+ String(ad_tgl_reg, 'dd/mm/yyyy hh:mm') + "^FS")
+		PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+10)+"^A0N,20,20^CI13^FR^FD"+ as_nama + "^FS")	
+		PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+35)+"^A0N,20,20^CI13^FR^FD" + "No. RM: " + as_norm + "  (" + ls_kelamin + ") " + String(ad_tgllahir, 'dd/mm/yyyy') + "^FS")
+		PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+65)+"^A0N,20,20^CI13^FR^FD" + 'Umur : ' + String(li_tahun) + " th / " + String(li_bulan) + " bl / " + String(li_hari) + " hr" +'   '+ "RS: " + as_sampleidrs +"^FS")
+		PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+85)+"^A0N,20,20^CI13^FR^FD" + ls_alamat +  "^FS")
+		PrintSend(ll_job, "^BY2,2.0^FO"+String(5+ll_posx)+","+String(ll_batas_y+110)+"^B3N,N,50,N,Y^FR^FD" + as_sampleid_bar + "^FS")
+		PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+165)+"^A0N,20,20^CI13^FR^FD" +"SID: " + as_sampleid + '   '+ String(ad_tgl_reg, 'dd/mm/yyyy hh:mm') + "^FS")
+	//End Added by Atikah at 2019, 22 July. (Mantis 35431)
+	
+	ELSE
+		PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+8)+"^A0N,32,28^CI13^FR^FD" + "SID: " + as_sampleid + "^FS")	
+		PrintSend(ll_job, "^FO"+String(233+ll_posx)+","+String(ll_batas_y+9)+"^A0N,27,23^CI13^FR^FD" + "RS: " + as_sampleidrs + "^FS")
+			
+		IF (li_tahun >= 1 ) Then
+			IF (is_format ='1' ) Then
+				PrintSend(ll_job, "^FO"+String(143+ll_posx)+","+String(ll_batas_y+147)+"^A0N,19,19^CI13^FR^FD" +'TL '+ String(ad_tgllahir, 'dd/mm/yyyy') +' '+ String(ld_tanggal,'dd/mm/yyyy hh:mm')+"^FS")
+			ELSE
+				PrintSend(ll_job, "^FO"+String(150+ll_posx)+","+String(ll_batas_y+147)+"^A0N,19,19^CI13^FR^FD" +' '+ String(ld_tanggal, 'dd/mm/yyyy hh:mm') +' '+ String(li_tahun) + " th / " + String(li_bulan) +" bl "+"^FS")
+			END IF	
+		ELSE
+			IF (is_format ='1' ) Then
+				PrintSend(ll_job, "^FO"+String(143+ll_posx)+","+String(ll_batas_y+147)+"^A0N,19,19^CI13^FR^FD" +' TL '+ String(ad_tgllahir, 'dd/mm/yyyy') +' '+ String(ld_tanggal,'dd/mm/yyyy hh:mm')+"^FS")
+			ELSE
+				PrintSend(ll_job, "^FO"+String(150+ll_posx)+","+String(ll_batas_y+147)+"^A0N,19,19^CI13^FR^FD" +' '+ String(ld_tanggal, 'dd/mm/yyyy hh:mm') +' '+ String(li_bulan) + " bl / "+' '+ String(li_hari)+" hr " +"^FS")
+			END IF	
+		END IF
+		PrintSend(ll_job, "^BY2,2.0^FO"+String(40+ll_posx)+","+String(ll_batas_y+37)+"^B3N,N,104,N,Y^FR^FD" + as_sampleid_bar + "^FS")
+		PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+145)+"^A0N,24,21^CI13^FR^FD" + "RM:" + as_norm + "^FS")
+		PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+171)+"^A0N,24,21^CI13^FR^FD" + as_nama + "^FS")
+	END IF
+	
+	/* Modified By Yana 06/10/2010 0019930 */ 
+	/* Menambahkan tgl.lahir pasien */
+//	IF (li_tahun >= 1 ) Then
+//		IF (is_format ='1' ) Then
+//			PrintSend(ll_job, "^FO"+String(125+ll_posx)+",147^A0N,19,19^CI13^FR^FD" +' TL '+ String(ad_tgllahir, 'dd/mm/yyyy') +' '+ String(ld_tanggal,'dd/mm/yyyy hh:mm')+"^FS")
+//		ELSE
+//			PrintSend(ll_job, "^FO"+String(150+ll_posx)+",147^A0N,19,19^CI13^FR^FD" +' '+ String(ld_tanggal, 'dd/mm/yyyy hh:mm') +' '+ String(li_tahun) + " th / " + String(li_bulan) +" bl "+"^FS")
+//		END IF	
+//	ELSE
+//		IF (is_format ='1' ) Then
+//			PrintSend(ll_job, "^FO"+String(125+ll_posx)+",147^A0N,19,19^CI13^FR^FD" +' TL '+ String(ad_tgllahir, 'dd/mm/yyyy') +' '+ String(ld_tanggal,'dd/mm/yyyy hh:mm')+"^FS")
+//		ELSE
+//			PrintSend(ll_job, "^FO"+String(150+ll_posx)+",147^A0N,19,19^CI13^FR^FD" +' '+ String(ld_tanggal, 'dd/mm/yyyy hh:mm') +' '+ String(li_bulan) + " bl / "+' '+ String(li_hari)+" hr " +"^FS")
+//		END IF	
+//	END IF
+	/* End Modifie */
+//	PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+171)+"^A0N,24,21^CI13^FR^FD" + as_nama + "^FS")
+				
+	IF (rb_double.Checked) THEN
+		// kemungkinan ditambahkan 450
+			
+		IF UPPER(is_sts_site) = "KNJ" THEN
+			PrintSend(ll_job, "^FO"+String(8+ll_lebar)+","+String(ll_batas_y+8)+"^A0N,32,28^CI13^FR^FD" + "SID: " + as_sampleid + "^FS")			
+			PrintSend(ll_job, "^FO"+String(223+ll_lebar)+","+String(ll_batas_y+9)+"^A0N,19,19^CI13^FR^FD" + "Tgl. Lahir: " + String(ad_tgllahir,'dd/mm/yyyy') + "^FS")		
+			PrintSend(ll_job, "^FO"+String(145+ll_lebar)+","+String(ll_batas_y+147)+"^A0N,19,19^CI13^FR^FD" +' '+ String(ld_tanggal, 'dd/mm/yyyy hh:mm')+ "^FS")
+			PrintSend(ll_job, "^BY2,2.0^FO"+String(43+ll_lebar)+","+String(ll_batas_y+37)+"^B3N,N,104,N,Y^FR^FD" + as_sampleid_bar + "^FS")
+			PrintSend(ll_job, "^FO"+String(8+ll_lebar)+","+String(ll_batas_y+145)+"^A0N,24,21^CI13^FR^FD" + "RM: " + as_norm + "^FS")
+			PrintSend(ll_job, "^FO"+String(8+ll_lebar)+","+String(ll_batas_y+171)+"^A0N,24,21^CI13^FR^FD" + as_nama + "^FS")
+		ELSEIF UPPER(is_sts_site) = "CMCN" THEN
+			PrintSend(ll_job, "^FO"+String(8+ll_lebar)+","+String(ll_batas_y+8)+"^A0N,32,28^CI13^FR^FD" + "SID: " + as_sampleid + "^FS")			
+			PrintSend(ll_job, "^FO"+String(233+ll_lebar)+","+String(ll_batas_y+9)+"^A0N,27,23^CI13^FR^FD" + "RS: " + as_sampleidrs + "^FS")
+			PrintSend(ll_job, "^BY2,2.0^FO"+String(40+ll_lebar)+","+String(ll_batas_y+37)+"^B3N,N,75,N,Y^FR^FD" + as_sampleid_bar + "^FS")
+			PrintSend(ll_job, "^FO"+String(5+ll_lebar)+","+String(ll_batas_y+119)+"^A0N,24,21^CI13^FR^FD" + "RM: " + as_norm +' ('+ls_kelamin+') '+String(ad_tgllahir,'dd/mm/yyyy')+ "^FS")
+//			PrintSend(ll_job, "^FO"+String(155+ll_lebar)+","+String(ll_batas_y+119)+"^A0N,24,21^CI13^FR^FD" + String(ld_tanggal,'dd/mm/yyyy hh:mm')+"^FS")
+//			PrintSend(ll_job, "^FO"+String(5+ll_lebar)+","+String(ll_batas_y+145)+"^A0N,24,23^CI13^FR^FD"+"Umur :" +  String(li_tahun) + "th/"+String(li_bulan) + "bl/"+' '+ String(li_hari)+"hr" +" ("+ls_kelamin+") "+String(ad_tgllahir,'dd/mm/yyyy')+"^FS")
+			PrintSend(ll_job, "^FO"+String(5+ll_lebar)+","+String(ll_batas_y+145)+"^A0N,24,23^CI13^FR^FD"+"Tgl.Reg :"+String(ld_tanggal,'dd/mm/yyyy hh:mm')+"^FS")
+			PrintSend(ll_job, "^FO"+String(8+ll_lebar)+","+String(ll_batas_y+171)+"^A0N,24,21^CI13^FR^FD" + as_nama + "^FS")
+		//add by dani,0032954
+		ELSEIF UPPER(is_sts_site) = "BAP" THEN
+			PrintSend(ll_job, "^FO"+String(5+ll_lebar)+","+String(ll_batas_y+12)+"^A0N,32,28^CI13^FR^FD" + "SID: " + as_sampleid + "^FS")	
+			PrintSend(ll_job, "^FO"+String(233+ll_lebar)+","+String(ll_batas_y+15)+"^A0N,27,23^CI13^FR^FD" + "RS: " + as_sampleidrs + "^FS")
+			PrintSend(ll_job, "^BY2,2.0^FO"+String(40+ll_lebar)+","+String(ll_batas_y+43)+"^B3N,N,80,N,Y^FR^FD" + as_sampleid_bar + "^FS")
+			PrintSend(ll_job, "^FO"+String(5+ll_lebar)+","+String(ll_batas_y+130)+"^A0N,24,21^CI13^FR^FD" + "RM: " + as_norm + "^FS")
+			PrintSend(ll_job, "^FO"+String(150+ll_lebar)+","+String(ll_batas_y+129)+"^A0N,19,19^CI13^FR^FD" +'  -  '+ String(ld_tanggal, 'dd/mm/yyyy hh:mm') +"^FS")
+			PrintSend(ll_job, "^FO"+String(5+ll_lebar)+","+String(ll_batas_y+154)+"^A0N,24,21^CI13^FR^FD" + as_nama + "^FS")
+			PrintSend(ll_job, "^FO"+String(5+ll_lebar)+","+String(ll_batas_y+178)+"^A0N,24,21^CI13^FR^FD"+"Tgl. Lahir : " + String(ad_tgllahir,'dd/mm/yyyy') + "^FS")
+		//end 0032954
+		
+		//Added by Atikah at 2019, 22 July. (Mantis 35431)
+		ELSEIF UPPER(is_sts_site) = "B" THEN			
+			PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+10)+"^A0N,20,20^CI13^FR^FD"+ as_nama + "^FS")	
+			PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+35)+"^A0N,20,20^CI13^FR^FD" + "No. RM: " + as_norm + "  (" + ls_kelamin + ") " + String(ad_tgllahir, 'dd/mm/yyyy') + "^FS")
+			PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+65)+"^A0N,20,20^CI13^FR^FD" + 'Umur : ' + String(li_tahun) + " th / " + String(li_bulan) + " bl / " + String(li_hari) + " hr" +'   '+ "RS: " + as_sampleidrs +"^FS")
+			PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+85)+"^A0N,20,20^CI13^FR^FD" + ls_alamat +  "^FS")
+			PrintSend(ll_job, "^BY2,2.0^FO"+String(5+ll_posx)+","+String(ll_batas_y+110)+"^B3N,N,50,N,Y^FR^FD" + as_sampleid_bar + "^FS")
+			PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+165)+"^A0N,20,20^CI13^FR^FD" +"SID: " + as_sampleid + '   '+ String(ad_tgl_reg, 'dd/mm/yyyy hh:mm') + "^FS")
+		//End Added by Atikah at 2019, 22 July. (Mantis 35431)
+		
+		ELSE
+			PrintSend(ll_job, "^FO"+String(8+ll_lebar)+","+String(ll_batas_y+8)+"^A0N,32,28^CI13^FR^FD" + "SID: " + as_sampleid + "^FS")			
+			PrintSend(ll_job, "^FO"+String(233+ll_lebar)+","+String(ll_batas_y+9)+"^A0N,27,23^CI13^FR^FD" + "RS: " + as_sampleidrs + "^FS")		
+			IF (li_tahun >= 1 ) Then
+				IF (is_format = '1' ) Then
+					PrintSend(ll_job, "^FO"+String(143+ll_lebar)+","+String(ll_batas_y+147)+"^A0N,19,19^CI13^FR^FD" +' TL '+ String(ad_tgllahir, 'dd/mm/yyyy') +' '+ String(ld_tanggal,'dd/mm/yyyy hh:mm')+"^FS")
+				ELSE
+					PrintSend(ll_job, "^FO"+String(145+ll_lebar)+","+String(ll_batas_y+147)+"^A0N,19,19^CI13^FR^FD" +' '+ String(ld_tanggal, 'dd/mm/yyyy hh:mm') +' '+ String(li_tahun) + " th / " + String(li_bulan) + " bl "+"^FS")
+				END IF
+			ELSE
+				IF (is_format ='1' ) Then
+					PrintSend(ll_job, "^FO"+String(143+ll_lebar)+","+String(ll_batas_y+147)+"^A0N,19,19^CI13^FR^FD" +' TL '+ String(ad_tgllahir, 'dd/mm/yyyy hh:mm') +' ' + String(ld_tanggal,'dd/mm/yyyy hh:mm')+ "^FS")
+				ELSE
+					PrintSend(ll_job, "^FO"+String(145+ll_lebar)+","+String(ll_batas_y+147)+"^A0N,19,19^CI13^FR^FD" +' '+ String(ld_tanggal, 'dd/mm/yyyy hh:mm') +' ' + String(li_bulan) +" bl / " + String(li_hari) +" hr "+ "^FS")
+				END IF
+			END IF
+			PrintSend(ll_job, "^BY2,2.0^FO"+String(43+ll_lebar)+","+String(ll_batas_y+37)+"^B3N,N,104,N,Y^FR^FD" + as_sampleid_bar + "^FS")
+			PrintSend(ll_job, "^FO"+String(8+ll_lebar)+","+String(ll_batas_y+145)+"^A0N,24,21^CI13^FR^FD" + "RM:" + as_norm + "^FS")
+			PrintSend(ll_job, "^FO"+String(8+ll_lebar)+","+String(ll_batas_y+171)+"^A0N,24,21^CI13^FR^FD" + as_nama + "^FS")
+		END IF
+	END IF
+	/* Modified By Yana 06/10/2010 0019930 */
+	/* Menambahkan tgl.lahir pasien */
+//      IF (li_tahun >= 1 ) Then
+//			IF (is_format = '1' ) Then
+//				PrintSend(ll_job, "^FO"+String(125+ll_lebar)+",147^A0N,19,19^CI13^FR^FD" +' TL '+ String(ad_tgllahir, 'dd/mm/yyyy') +' '+ String(ld_tanggal,'dd/mm/yyyy hh:mm')+"^FS")
+//			ELSE
+//				PrintSend(ll_job, "^FO"+String(145+ll_lebar)+",147^A0N,19,19^CI13^FR^FD" +' '+ String(ld_tanggal, 'dd/mm/yyyy hh:mm') +' '+ String(li_tahun) + " th / " + String(li_bulan) + " bl "+"^FS")
+//			END IF
+//		ELSE
+//			IF (is_format ='1' ) Then
+//				PrintSend(ll_job, "^FO"+String(125+ll_lebar)+",147^A0N,19,19^CI13^FR^FD" +' TL '+ String(ad_tgllahir, 'dd/mm/yyyy hh:mm') +' ' + String(ld_tanggal,'dd/mm/yyyy hh:mm')+ "^FS")
+//			ELSE
+//				PrintSend(ll_job, "^FO"+String(145+ll_lebar)+",147^A0N,19,19^CI13^FR^FD" +' '+ String(ld_tanggal, 'dd/mm/yyyy hh:mm') +' ' + String(li_bulan) +" bl / " + String(li_hari) +" hr "+ "^FS")
+//			END IF
+//		END IF
+//		PrintSend(ll_job, "^FO"+String(8+ll_lebar)+",171^A0N,24,21^CI13^FR^FD" + as_nama + "^FS")
+//	END IF
+	/* End Modified*/
+	PrintSend(ll_job, "^PQ"+string(ll_cetak)+",0,0,N")
+	PrintSend(ll_job, "^XZ")
+	
+	
+	/* Send the job to the printer or spooler and closes the job. */
+	ll_return = PrintClose(ll_job)
+	IF ll_return = -1 THEN
+		PrintSetPrinter (ls_printer_old)
+		MessageBox ("Peringatan", "Gagal Mengeksekusi 'Print Job' dan Menutupnya", Exclamation!)
+		Return 
+	END IF	
+END IF
+
+/*Cetakan Barcode 128*/
+//ll_cetak128 = Long(em_2.Text)
+em_2.GetData(ll_cetak128)
+IF (ll_cetak128 > 0) THEN
+	//	/* Open a print job. */
+	ll_job2 = PrintOpen()
+	IF ll_job2 = -1 THEN
+		MessageBox ("Peringatan", "Gagal Mendapatkan 'Print Job'", Exclamation!)
+		Return 
+	END IF
+	
+	IF (rb_double.Checked) THEN
+		ll_cetak128 = Int(ll_cetak128/2)
+	END IF
+	
+	ls_bar1A 		= "^FN1^FD>;" + as_norm + "0" + "Z^FS"
+	ls_nama1 		= "^FN2^FD" + as_nama + "^FS" 
+	ls_norm1 		= "^FN3^FD" + "RM: " + as_norm + "^FS"
+	ls_sampleid1 	= "^FN4^FD" + "SID: " + as_sampleid + "^FS"
+	ls_bar1B			= "^FN5^FD" + as_sampleid_bar + "^FS"
+	ls_tgl1        		= "^FN11^FD" + "- " + String(ld_tanggal, 'dd/mm/yyyy hh:mm') + "^FS"
+	ls_sampleidrs1 = "^FN13^FD" + "RS: " + as_sampleidrs + "^FS"
+	/**/
+	ls_umur1 		=  "^FN10^FD" + String(li_tahun) + " th / " + String(li_bulan) + " bl / " + String(li_hari) + " hr" + "^FS"
+	/**/
+	/*Added By Yana ,06/10/2015 0019930*/
+	/*Menambahkan tgl.lahir psaien*/
+	ls_tgl_lahir        = "^FN11^FD" + String(ad_tgllahir, 'dd/mm/yyyy') + "^FS"
+	/**/
+		
+	// --> Kirim Variabel128 -nya
+	PrintSend(ll_job2, "^XA")
+	PrintSend(ll_job2, "^PR4")
+	PrintSend(ll_job2, "^LH"+String(ll_posx)+",0^FS")
+		
+	IF UPPER(is_sts_site) = "KNJ" THEN
+		PrintSend(ll_job2, "^LL200^MD20^MMT^MNY^FO"+String(5+ll_posx)+","+String(ll_batas_y+8)+"^A0N,32,28^CI13^FR^FD" + "SID: " + as_sampleid + "^FS")
+		PrintSend(ll_job2, "^FO"+String(223+ll_posx)+","+String(ll_batas_y+9)+"^A0N,49,19^CI13^FR^FD" + "Tgl. Lahir: " + String(ad_tgllahir,'dd/mm/yyyy') + "^FS")
+		PrintSend(ll_job2, "^FO"+String(150+ll_posx)+","+String(ll_batas_y+147)+"^A0N,19,19^CI13^FR^FD" +' '+ String(ld_tanggal, 'dd/mm/yyyy hh:mm') +"^FS")
+		PrintSend(ll_job2, "^BY2,2.0^FO"+String(40+ll_posx)+","+String(ll_batas_y+37)+"^BCN,104,N,Y,N^FR^FD" + as_sampleid_bar + "^FS")
+		PrintSend(ll_job2, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+145)+"^A0N,24,21^CI13^FR^FD" + "RM: " + as_norm + "^FS")
+		PrintSend(ll_job2, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+171)+"^A0N,24,21^CI13^FR^FD" + as_nama + "^FS")
+	ELSEIF UPPER(is_sts_site) = "CMCN" THEN
+		PrintSend(ll_job2, "^LL200^MD20^MMT^MNY^FO"+String(5+ll_posx)+","+String(ll_batas_y+8)+"^A0N,32,28^CI13^FR^FD" + "SID: " + as_sampleid + "^FS")
+		PrintSend(ll_job2, "^FO"+String(233+ll_posx)+","+String(ll_batas_y+9)+"^A0N,27,23^CI13^FR^FD" + "RS: " + as_sampleidrs + "^FS")
+		PrintSend(ll_job2, "^BY2,2.0^FO"+String(40+ll_posx)+","+String(ll_batas_y+37)+"^BCN,75,N,Y,N^FR^FD" + as_sampleid_bar + "^FS")
+		PrintSend(ll_job2, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+119)+"^A0N,24,21^CI13^FR^FD" + "RM: " + as_norm +' ('+ls_kelamin+') '+String(ad_tgllahir,'dd/mm/yyyy')+ "^FS")
+//		PrintSend(ll_job2, "^FO"+String(155+ll_posx)+","+String(ll_batas_y+119)+"^A0N,24,21^CI13^FR^FD" + String(ld_tanggal,'dd/mm/yyyy hh:mm')+"^FS")
+//		PrintSend(ll_job2, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+145)+"^A0N,24,23^CI13^FR^FD"+"Umur :" +  String(li_tahun) + "th/"+String(li_bulan) + "bl/"+' '+ String(li_hari)+"hr" +" ("+ls_kelamin+") "+String(ad_tgllahir,'dd/mm/yyyy')+"^FS")
+		PrintSend(ll_job2, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+145)+"^A0N,24,23^CI13^FR^FD"+"Tgl.Reg :"+String(ld_tanggal,'dd/mm/yyyy hh:mm')+"^FS")
+		PrintSend(ll_job2, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+171)+"^A0N,24,21^CI13^FR^FD" + as_nama + "^FS")
+	//add by dani,0032954
+	ELSEIF UPPER(is_sts_site) = "BAP" THEN
+		PrintSend(ll_job2, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+12)+"^A0N,32,28^CI13^FR^FD" + "SID: " + as_sampleid + "^FS")	
+		PrintSend(ll_job2, "^FO"+String(233+ll_posx)+","+String(ll_batas_y+15)+"^A0N,27,23^CI13^FR^FD" + "RS: " + as_sampleidrs + "^FS")
+		PrintSend(ll_job2, "^BY2,2.0^FO"+String(40+ll_posx)+","+String(ll_batas_y+43)+"^B3N,N,80,N,Y^FR^FD" + as_sampleid_bar + "^FS")
+		PrintSend(ll_job2, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+130)+"^A0N,24,21^CI13^FR^FD" + "RM: " + as_norm + "^FS")
+		PrintSend(ll_job2, "^FO"+String(150+ll_posx)+","+String(ll_batas_y+129)+"^A0N,19,19^CI13^FR^FD" +'  -  '+ String(ld_tanggal, 'dd/mm/yyyy hh:mm') +"^FS")
+		PrintSend(ll_job2, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+154)+"^A0N,24,21^CI13^FR^FD" + as_nama + "^FS")
+		PrintSend(ll_job2, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+178)+"^A0N,24,21^CI13^FR^FD"+"Tgl. Lahir : " + String(ad_tgllahir,'dd/mm/yyyy') + "^FS")
+	//end 0032954
+	
+	//Added by Atikah at 2019, 22 July. (Mantis 35431)
+	ELSEIF UPPER(is_sts_site) = "B" THEN			
+		PrintSend(ll_job2, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+10)+"^A0N,20,20^CI13^FR^FD"+ as_nama + "^FS")	
+		PrintSend(ll_job2, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+35)+"^A0N,20,20^CI13^FR^FD" + "No. RM: " + as_norm + "  (" + ls_kelamin + ") " + String(ad_tgllahir, 'dd/mm/yyyy') + "^FS")
+		PrintSend(ll_job2, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+65)+"^A0N,20,20^CI13^FR^FD" + 'Umur : ' + String(li_tahun) + " th / " + String(li_bulan) + " bl / " + String(li_hari) + " hr" +'   '+ "RS: " + as_sampleidrs +"^FS")
+		PrintSend(ll_job2, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+85)+"^A0N,20,20^CI13^FR^FD" + ls_alamat +  "^FS")
+		PrintSend(ll_job2, "^BY2,2.0^FO"+String(5+ll_posx)+","+String(ll_batas_y+110)+"^B3N,N,50,N,Y^FR^FD" + as_sampleid_bar + "^FS")
+		PrintSend(ll_job2, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+165)+"^A0N,20,20^CI13^FR^FD" +"SID: " + as_sampleid + '   '+ String(ad_tgl_reg, 'dd/mm/yyyy hh:mm') + "^FS")
+	//End Added by Atikah at 2019, 22 July. (Mantis 35431)
+	
+	ELSE
+		PrintSend(ll_job2, "^LL200^MD20^MMT^MNY^FO"+String(5+ll_posx)+","+String(ll_batas_y+8)+"^A0N,32,28^CI13^FR^FD" + "SID: " + as_sampleid + "^FS")
+		PrintSend(ll_job2, "^FO"+String(233+ll_posx)+","+String(ll_batas_y+9)+"^A0N,27,23^CI13^FR^FD" + "RS: " + as_sampleidrs + "^FS")
+		IF (li_tahun >= 1 ) Then
+			IF ( is_format ='1' ) Then
+				PrintSend(ll_job2, "^FO"+String(143+ll_posx)+","+String(ll_batas_y+147)+"^A0N,19,19^CI13^FR^FD" +' TL '+ String(ad_tgllahir, 'dd/mm/yyyy') +' '+ String(ld_tanggal,'dd/mm/yyyy hh:mm')+"^FS")
+			ELSE
+				PrintSend(ll_job2, "^FO"+String(150+ll_posx)+","+String(ll_batas_y+147)+"^A0N,19,19^CI13^FR^FD" +' '+ String(ld_tanggal, 'dd/mm/yyyy hh:mm') +' '+ String(li_tahun) + " th / " + String(li_bulan) +" bl "+"^FS")
+			END IF
+		ELSE
+			IF ( is_format ='1' ) Then
+				PrintSend(ll_job2, "^FO"+String(143+ll_posx)+","+String(ll_batas_y+147)+"^A0N,19,19^CI13^FR^FD" +' TL '+ String(ad_tgllahir, 'dd/mm/yyyy') +' '+ String(ld_tanggal,'dd/mm/yyyy hh:mm')+"^FS")
+			ELSE
+				PrintSend(ll_job2, "^FO"+String(150+ll_posx)+","+String(ll_batas_y+147)+"^A0N,19,19^CI13^FR^FD" +' '+ String(ld_tanggal, 'dd/mm/yyyy hh:mm') +' '+ String(li_bulan) + " bl / "+' '+ String(li_hari)+" hr " +"^FS")
+			END IF	
+		END IF
+		PrintSend(ll_job2, "^BY2,2.0^FO"+String(40+ll_posx)+","+String(ll_batas_y+37)+"^BCN,104,N,Y,N^FR^FD" + as_sampleid_bar + "^FS")
+		PrintSend(ll_job2, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+145)+"^A0N,24,21^CI13^FR^FD" + "RM:" + as_norm + "^FS")
+		PrintSend(ll_job2, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+171)+"^A0N,24,21^CI13^FR^FD" + as_nama + "^FS")
+	END IF
+	
+	/*Added By Yana ,06/10/2015 0019930*/
+	/*Menambahkan tgl.lahir psaien*/
+//	IF (li_tahun >= 1 ) Then
+//		IF ( is_format ='1' ) Then
+//			PrintSend(ll_job2, "^FO"+String(125+ll_posx)+",147^A0N,19,19^CI13^FR^FD" +' TL '+ String(ad_tgllahir, 'dd/mm/yyyy') +' '+ String(ld_tanggal,'dd/mm/yyyy hh:mm')+"^FS")
+//		ELSE
+//			PrintSend(ll_job2, "^FO"+String(150+ll_posx)+",147^A0N,19,19^CI13^FR^FD" +' '+ String(ld_tanggal, 'dd/mm/yyyy hh:mm') +' '+ String(li_tahun) + " th / " + String(li_bulan) +" bl "+"^FS")
+//		END IF
+//	ELSE
+//		IF ( is_format ='1' ) Then
+//			PrintSend(ll_job2, "^FO"+String(125+ll_posx)+",147^A0N,19,19^CI13^FR^FD" +' TL '+ String(ad_tgllahir, 'dd/mm/yyyy') +' '+ String(ld_tanggal,'dd/mm/yyyy hh:mm')+"^FS")
+//		ELSE
+//			PrintSend(ll_job2, "^FO"+String(150+ll_posx)+",147^A0N,19,19^CI13^FR^FD" +' '+ String(ld_tanggal, 'dd/mm/yyyy hh:mm') +' '+ String(li_bulan) + " bl / "+' '+ String(li_hari)+" hr " +"^FS")
+//		END IF	
+//	END IF
+	/* End Modified*/
+	
+	IF (rb_double.Checked) THEN
+		// kemungkinan ditambahkan 400+50
+				
+		IF UPPER(is_sts_site) = "KNJ" THEN
+			PrintSend(ll_job2, "^LL200^MD20^MMT^MNY^FO"+String(8+ll_lebar)+","+String(ll_batas_y+8)+"^A0N,32,28^CI13^FR^FD" + "SID: " + as_sampleid + "^FS")		
+			PrintSend(ll_job2, "^FO"+String(223+ll_lebar)+","+String(ll_batas_y+9)+"^A0N,19,19^CI13^FR^FD" + "Tgl. Lahir: " + String(ad_tgllahir,'dd/mm/yyyy') + "^FS")		
+			PrintSend(ll_job2, "^FO"+String(145+ll_lebar)+","+String(ll_batas_y+147)+"^A0N,19,19^CI13^FR^FD" +' '+ String(ld_tanggal, 'dd/mm/yyyy hh:mm') + "^FS")
+			PrintSend(ll_job2, "^BY2,2.0^FO"+String(43+ll_lebar)+","+String(ll_batas_y+37)+"^BCN,104,N,Y,N^FR^FD" + as_sampleid_bar + "^FS")
+			PrintSend(ll_job2, "^FO"+String(8+ll_lebar)+","+String(ll_batas_y+145)+"^A0N,24,21^CI13^FR^FD" + "RM: " + as_norm + "^FS")
+			PrintSend(ll_job2, "^FO"+String(8+ll_lebar)+","+String(ll_batas_y+171)+"^A0N,24,21^CI13^FR^FD" + as_nama + "^FS")
+		ELSEIF UPPER(is_sts_site) = "CMCN" THEN
+			PrintSend(ll_job2, "^LL200^MD20^MMT^MNY^FO"+String(8+ll_lebar)+","+String(ll_batas_y+8)+"^A0N,32,28^CI13^FR^FD" + "SID: " + as_sampleid + "^FS")		
+			PrintSend(ll_job2, "^FO"+String(233+ll_lebar)+","+String(ll_batas_y+9)+"^A0N,27,23^CI13^FR^FD" + "RS: " + as_sampleidrs + "^FS")
+			PrintSend(ll_job2, "^BY2,2.0^FO"+String(40+ll_lebar)+","+String(ll_batas_y+37)+"^BCN,75,N,Y,N^FR^FD" + as_sampleid_bar + "^FS")
+			PrintSend(ll_job2, "^FO"+String(5+ll_lebar)+","+String(ll_batas_y+119)+"^A0N,24,21^CI13^FR^FD" + "RM: " + as_norm +' ('+ls_kelamin+') '+String(ad_tgllahir,'dd/mm/yyyy')+ "^FS")
+//			PrintSend(ll_job2, "^FO"+String(155+ll_lebar)+","+String(ll_batas_y+119)+"^A0N,24,21^CI13^FR^FD" + String(ld_tanggal,'dd/mm/yyyy hh:mm')+"^FS")
+//			PrintSend(ll_job2, "^FO"+String(5+ll_lebar)+","+String(ll_batas_y+145)+"^A0N,24,23^CI13^FR^FD"+"Umur :" +  String(li_tahun) + "th/"+String(li_bulan) + "bl/"+' '+ String(li_hari)+"hr" +" ("+ls_kelamin+") "+String(ad_tgllahir,'dd/mm/yyyy')+"^FS")
+			PrintSend(ll_job2, "^FO"+String(5+ll_lebar)+","+String(ll_batas_y+145)+"^A0N,24,23^CI13^FR^FD"+"Tgl.Reg :"+String(ld_tanggal,'dd/mm/yyyy hh:mm')+"^FS")
+			PrintSend(ll_job2, "^FO"+String(8+ll_lebar)+","+String(ll_batas_y+171)+"^A0N,24,21^CI13^FR^FD" + as_nama + "^FS")
+		//add by dani,0032954
+		ELSEIF UPPER(is_sts_site) = "BAP" THEN
+			PrintSend(ll_job2, "^FO"+String(5+ll_lebar)+","+String(ll_batas_y+12)+"^A0N,32,28^CI13^FR^FD" + "SID: " + as_sampleid + "^FS")	
+			PrintSend(ll_job2, "^FO"+String(233+ll_lebar)+","+String(ll_batas_y+15)+"^A0N,27,23^CI13^FR^FD" + "RS: " + as_sampleidrs + "^FS")
+			PrintSend(ll_job2, "^BY2,2.0^FO"+String(40+ll_lebar)+","+String(ll_batas_y+43)+"^B3N,N,80,N,Y^FR^FD" + as_sampleid_bar + "^FS")
+			PrintSend(ll_job2, "^FO"+String(5+ll_lebar)+","+String(ll_batas_y+130)+"^A0N,24,21^CI13^FR^FD" + "RM: " + as_norm + "^FS")
+			PrintSend(ll_job2, "^FO"+String(150+ll_lebar)+","+String(ll_batas_y+129)+"^A0N,19,19^CI13^FR^FD" +'  -  '+ String(ld_tanggal, 'dd/mm/yyyy hh:mm') +"^FS")
+			PrintSend(ll_job2, "^FO"+String(5+ll_lebar)+","+String(ll_batas_y+154)+"^A0N,24,21^CI13^FR^FD" + as_nama + "^FS")
+			PrintSend(ll_job2, "^FO"+String(5+ll_lebar)+","+String(ll_batas_y+178)+"^A0N,24,21^CI13^FR^FD"+"Tgl. Lahir : " + String(ad_tgllahir,'dd/mm/yyyy') + "^FS")
+		//end 0032954
+		
+		//Added by Atikah at 2019, 22 July. (Mantis 35431)
+		ELSEIF UPPER(is_sts_site) = "B" THEN			
+			PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+10)+"^A0N,20,20^CI13^FR^FD"+ as_nama + "^FS")	
+			PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+35)+"^A0N,20,20^CI13^FR^FD" + "No. RM: " + as_norm + "  (" + ls_kelamin + ") " + String(ad_tgllahir, 'dd/mm/yyyy') + "^FS")
+			PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+65)+"^A0N,20,20^CI13^FR^FD" + 'Umur : ' + String(li_tahun) + " th / " + String(li_bulan) + " bl / " + String(li_hari) + " hr" +'   '+ "RS: " + as_sampleidrs +"^FS")
+			PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+85)+"^A0N,20,20^CI13^FR^FD" + ls_alamat +  "^FS")
+			PrintSend(ll_job, "^BY2,2.0^FO"+String(5+ll_posx)+","+String(ll_batas_y+110)+"^B3N,N,50,N,Y^FR^FD" + as_sampleid_bar + "^FS")
+			PrintSend(ll_job, "^FO"+String(5+ll_posx)+","+String(ll_batas_y+165)+"^A0N,20,20^CI13^FR^FD" +"SID: " + as_sampleid + '   '+ String(ad_tgl_reg, 'dd/mm/yyyy hh:mm') + "^FS")
+		ELSE
+			PrintSend(ll_job2, "^LL200^MD20^MMT^MNY^FO"+String(8+ll_lebar)+","+String(ll_batas_y+8)+"^A0N,32,28^CI13^FR^FD" + "SID: " + as_sampleid + "^FS")		
+			PrintSend(ll_job2, "^FO"+String(233+ll_lebar)+","+String(ll_batas_y+9)+"^A0N,27,23^CI13^FR^FD" + "RS: " + as_sampleidrs + "^FS")		
+			IF (li_tahun >= 1 ) Then
+				IF ( is_format ='1' ) Then
+					PrintSend(ll_job2, "^FO"+String(143+ll_lebar)+","+String(ll_batas_y+147)+"^A0N,19,19^CI13^FR^FD" +' TL '+ String(ad_tgllahir, 'dd/mm/yyyy') +' '+ String(ld_tanggal,'dd/mm/yyyy hh:mm')+"^FS")
+				ELSE 
+					PrintSend(ll_job2, "^FO"+String(145+ll_lebar)+","+String(ll_batas_y+147)+"^A0N,19,19^CI13^FR^FD" +' '+ String(ld_tanggal, 'dd/mm/yyyy hh:mm') +' '+ String(li_tahun) + " th / " + String(li_bulan) + " bl"+"^FS")
+				END IF
+			ELSE
+				IF ( is_format ='1' ) Then
+					PrintSend(ll_job2, "^FO"+String(143+ll_lebar)+","+String(ll_batas_y+147)+"^A0N,19,19^CI13^FR^FD" +' TL '+ String(ad_tgllahir, 'dd/mm/yyyy') +' ' + String(ld_tanggal,'dd/mm/yyyy hh:mm')+ "^FS")
+				ELSE
+					PrintSend(ll_job2, "^FO"+String(145+ll_lebar)+","+String(ll_batas_y+147)+"^A0N,19,19^CI13^FR^FD" +' '+ String(ld_tanggal, 'dd/mm/yyyy hh:mm') +' ' + String(li_bulan) +" bl / " + String(li_hari) +" hr"+ "^FS")
+				END IF
+			END IF
+			PrintSend(ll_job2, "^BY2,2.0^FO"+String(43+ll_lebar)+","+String(ll_batas_y+37)+"^BCN,104,N,Y,N^FR^FD" + as_sampleid_bar + "^FS")
+			PrintSend(ll_job2, "^FO"+String(8+ll_lebar)+","+String(ll_batas_y+145)+"^A0N,24,21^CI13^FR^FD" + "RM:" + as_norm + "^FS")
+			PrintSend(ll_job2, "^FO"+String(8+ll_lebar)+","+String(ll_batas_y+171)+"^A0N,24,21^CI13^FR^FD" + as_nama + "^FS")
+		END IF
+		
+	/*Added By Yana ,06/10/2015 0019930*/
+	/*Menambahkan tgl.lahir psaien*/
+//       IF (li_tahun >= 1 ) Then
+//			IF ( is_format ='1' ) Then
+//				PrintSend(ll_job2, "^FO"+String(125+ll_lebar)+",147^A0N,19,19^CI13^FR^FD" +' TL '+ String(ad_tgllahir, 'dd/mm/yyyy') +' '+ String(ld_tanggal,'dd/mm/yyyy hh:mm')+"^FS")
+//			ELSE 
+//				PrintSend(ll_job2, "^FO"+String(145+ll_lebar)+",147^A0N,19,19^CI13^FR^FD" +' '+ String(ld_tanggal, 'dd/mm/yyyy hh:mm') +' '+ String(li_tahun) + " th / " + String(li_bulan) + " bl"+"^FS")
+//			END IF
+//	   ELSE
+//			IF ( is_format ='1' ) Then
+//				PrintSend(ll_job2, "^FO"+String(125+ll_lebar)+",147^A0N,19,19^CI13^FR^FD" +' TL '+ String(ad_tgllahir, 'dd/mm/yyyy') +' ' + String(ld_tanggal,'dd/mm/yyyy hh:mm')+ "^FS")
+//			ELSE
+//				PrintSend(ll_job2, "^FO"+String(145+ll_lebar)+",147^A0N,19,19^CI13^FR^FD" +' '+ String(ld_tanggal, 'dd/mm/yyyy hh:mm') +' ' + String(li_bulan) +" bl / " + String(li_hari) +" hr"+ "^FS")
+//			END IF
+//		 END IF
+	END IF
+    /*ENd Modified*/
+	PrintSend(ll_job2, "^PQ"+string(ll_cetak128)+",0,0,N")
+	PrintSend(ll_job2, "^XZ")
+	
+	
+	/* Send the job to the printer or spooler and closes the job. */
+	ll_return = PrintClose(ll_job2)
+	IF ll_return = -1 THEN
+		MessageBox ("Peringatan", "Gagal Mengeksekusi 'Print Job' dan Menutupnya", Exclamation!)
+		Return 
+	END IF
+END IF
+
+PrintSetPrinter (ls_printer_old)
+===================================
+ AND ((isnull(TTERMINAL_LABEL.STS_ACUAN_DATA,'0')='0')
+  OR (isnull(TTERMINAL_LABEL.STS_ACUAN_DATA,'0')='1'
+	  AND RIGHT(KARTU.NORM,len(TTERMINAL_LABEL.BATASAN_NORM1))>= TTERMINAL_LABEL.BATASAN_NORM1 
+	  AND RIGHT(KARTU.NORM,len(TTERMINAL_LABEL.BATASAN_NORM2))<= TTERMINAL_LABEL.BATASAN_NORM2)
+	 
+	 )
+=====================================
+1.hidup itu ibadah
+2. mumupng dikasih panggung tuhan
+3. jangan sibuk diri sendri,pamer2,tp lebih giving,build somthing
+stres is keinginan yang tidak terkelola
+
+kemimpinan (seni mengambil keputusan)
+1.mimpin diri sndiri
+2.keluarga
+3.lingkungan
+
+cri pemimipin
+1.visioner (kedepan bagaimana)
+2.inovatif (dr ga ada jadi ada)
+3.turun tangan skill with heart
+4. kepribadian teladan,tidak usah ngomng tp diikutin
+ --skill menutup kegelisahan hatinya
+5.risks taker--mengambil risk
+in life
+resiko itu harus diambil tapi terakar/terkakulasi
+6. optimis
+
+level 1 : intrepener (mandiri) level 2 :risktakker
+rmg:081291000266
+rizki misteri 
+
