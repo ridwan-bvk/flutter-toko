@@ -4175,6 +4175,96 @@ PrintSetPrinter (ls_printer_old)
 	 
 	 )
 =====================================
+
+IF OBJECT_ID ('dbo.sp_GetNoKontrol') IS NOT NULL
+	DROP PROCEDURE dbo.sp_GetNoKontrol
+GO
+
+CREATE PROCEDURE dbo.sp_GetNoKontrol
+/*******************************************************************/
+/* Object-ID     : sp_GetNoKontrol                                 */
+/* Module        : Registrasi                                      */
+/* Revise Number : 00                                              */
+/* Created By    : RIdwan                               		   */
+/* Created At    : 2021-04-16                                       */
+/* Assign  		 : 0039556                                         */
+/*******************************************************************/
+@Nokontrol varchar(6) output
+as
+begin
+    BEGIN TRAN
+    DECLARE @No       numeric
+    DECLARE @No_bebas char(1)
+
+
+     IF NOT EXISTS (SELECT 1 
+    				FROM COUNTER_NO_KONTROL
+				   WHERE NO_KONTROL <> 999999
+    				 AND TGL_PAKAI	 = (SELECT MAX(A.TGL_PAKAI)
+    				                      FROM COUNTER_NO_KONTROL A)
+	 			   )
+     BEGIN
+	    INSERT INTO COUNTER_NO_KONTROL
+		VALUES (getdate(),0)
+     END
+
+     SELECT @No = NO_KONTROL  + 1
+       FROM COUNTER_NO_KONTROL
+	  WHERE NO_KONTROL  <> 999999
+	    AND TGL_PAKAI	 = (SELECT MAX(A.TGL_PAKAI)
+						  	  FROM COUNTER_NO_KONTROL A)
+      BEGIN TRAN
+	      UPDATE COUNTER_NO_KONTROL
+			 SET TGL_PAKAI	 = getdate(),
+			  	 NO_KONTROL  = @No
+		   WHERE NO_KONTROL <> 999999
+		     AND TGL_PAKAI	 = (SELECT MAX(A.TGL_PAKAI)
+					 						   FROM COUNTER_NO_KONTROL A)
+      COMMIT TRAN
+
+      SELECT @Nokontrol = right('000000' + rtrim(ltrim(convert(char(6), @No))), 6)
+      /* Cek List Nomor Sudah Terpakai */
+      SELECT @No_bebas = "0"
+      WHILE (@No_bebas = "0")
+      BEGIN
+           	IF EXISTS (SELECT 1
+                         FROM REGISTRASI_MASUK
+                       	WHERE REGISTRASI_MASUK.NO_KONTROL = @Nokontrol)
+            BEGIN
+                   SELECT @No_bebas = "0"
+
+                   SELECT @No = NO_KONTROL  + 1
+                     FROM COUNTER_NO_KONTROL
+                    WHERE NO_KONTROL <> 999999
+		     		  AND TGL_PAKAI	 = (SELECT MAX(A.TGL_PAKAI)
+					 					  FROM COUNTER_NO_KONTROL A)
+
+                   BEGIN TRAN
+	                   UPDATE COUNTER_NO_KONTROL
+						  SET TGL_PAKAI	 = getdate(),
+						  	  NO_KONTROL = @No
+						WHERE NO_KONTROL <> 999999
+					    AND TGL_PAKAI	 = (SELECT MAX(A.TGL_PAKAI)
+						 						   FROM COUNTER_NO_KONTROL A)
+                   COMMIT TRAN
+
+                   SELECT @Nokontrol = right('000000' + rtrim(ltrim(convert(char(6), @No))), 6)
+            END
+			ELSE
+            BEGIN
+                   SELECT @No_bebas = "1"
+            END
+      END
+      COMMIT TRAN
+      
+RETURN
+END
+
+
+GO
+
+
+======================================
 1.hidup itu ibadah
 2. mumupng dikasih panggung tuhan
 3. jangan sibuk diri sendri,pamer2,tp lebih giving,build somthing
